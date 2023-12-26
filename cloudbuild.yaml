@@ -13,7 +13,7 @@ steps:
         "push",
         "${_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}",
       ]
-  ## cloud run deploy
+
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: gcloud
     args:
@@ -26,6 +26,8 @@ steps:
         "--region",
         "${_LOCATION}",
       ]
+options:
+  logging: CLOUD_LOGGING_ONLY
 
 images:
   - "${_LOCATION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}"
