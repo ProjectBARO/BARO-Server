@@ -1,5 +1,4 @@
-# Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.21-alpine
 
 WORKDIR /app
 
@@ -10,13 +9,6 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /docker-gs-ping
 
-# Final stage
-FROM alpine:latest
-
-WORKDIR /app
-
-COPY --from=builder /docker-gs-ping /app/docker-gs-ping
-
 EXPOSE 8080
 
-CMD ["/app/docker-gs-ping"]
+CMD ["/docker-gs-ping"]
