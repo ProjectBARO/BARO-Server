@@ -33,12 +33,38 @@ func (controller *UserController) LoginOrRegisterUser(c *gin.Context) {
 	c.JSON(201, user)
 }
 
-func (controller *UserController) FindUserByID(c *gin.Context) {
-	user, err := controller.UserService.FindUserByID(c)
+func (controller *UserController) GetUserInfo(c *gin.Context) {
+	user, err := controller.UserService.GetUserInfo(c)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(200, user)
+}
+
+func (controller *UserController) UpdateUserInfo(c *gin.Context) {
+	var input types.RequestUpdateUser
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := controller.UserService.UpdateUserInfo(c, input)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, user)
+}
+
+func (controller *UserController) DeleteUser(c *gin.Context) {
+	err := controller.UserService.DeleteUser(c)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "success"})
 }
