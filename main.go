@@ -24,17 +24,15 @@ func main() {
 	openAPI := router.Group("/")
 	{
 		openAPI.GET("/health", controllers.HealthCheckController{}.HealthCheck)
-		openAPI.POST("/login", func(c *gin.Context) {
-			userController.LoginOrRegisterUser(c)
-		})
+		openAPI.POST("/login", func(c *gin.Context) { userController.LoginOrRegisterUser(c) })
 	}
 
 	secureAPI := router.Group("/")
 	secureAPI.Use(authMiddleware.StripTokenMiddleware())
 	{
-		secureAPI.GET("/users/me", func(c *gin.Context) {
-			userController.FindUserByID(c)
-		})
+		secureAPI.GET("/users/me", func(c *gin.Context) { userController.GetUserInfo(c) })
+		secureAPI.PUT("/users/me", func(c *gin.Context) { userController.UpdateUserInfo(c) })
+		secureAPI.DELETE("/users/me", func(c *gin.Context) { userController.DeleteUser(c) })
 	}
 
 	port := os.Getenv("PORT")
