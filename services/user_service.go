@@ -27,9 +27,14 @@ func (service *UserService) generateToken(userID uint) (string, error) {
 }
 
 func (service *UserService) Login(input types.RequestCreateUser) (types.ResponseToken, error) {
-	existingUser, err := service.UserRepository.FindByEmail(input.Email)
-	if err != nil {
-		return types.ResponseToken{}, err
+	existingUser, dbErr := service.UserRepository.FindByEmail(input.Email)
+	if dbErr != nil && dbErr.Error() == "record not found" {
+		responseToken, registerErr := service.RegisterUser(input)
+		if registerErr != nil {
+			return types.ResponseToken{}, registerErr
+		}
+
+		return responseToken, nil
 	}
 
 	if existingUser != nil {
@@ -38,15 +43,11 @@ func (service *UserService) Login(input types.RequestCreateUser) (types.Response
 			return types.ResponseToken{}, err
 		}
 
-		return types.ResponseToken{Token: token}, nil
+		responseToken := types.ResponseToken{Token: token}
+		return responseToken, nil
 	}
 
-	token, err := service.RegisterUser(input)
-	if err != nil {
-		return types.ResponseToken{}, err
-	}
-
-	return token, nil
+	return types.ResponseToken{}, dbErr
 }
 
 func (service *UserService) RegisterUser(input types.RequestCreateUser) (types.ResponseToken, error) {
