@@ -1,5 +1,7 @@
 package models
 
+import "gorm.io/gorm"
+
 type User struct {
 	ID       uint   `json:"id" gorm:"primary_key"`
 	Name     string `json:"name"`
@@ -7,4 +9,5 @@ type User struct {
 	Email    string `json:"email" gorm:"unique"`
 	Age      int    `json:"age"`
 	Gender   string `json:"gender"`
+	Deleted  gorm.DeletedAt
 }
