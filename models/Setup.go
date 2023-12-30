@@ -1,9 +1,7 @@
 package models
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
 	"gorm.io/driver/mysql"
@@ -13,26 +11,24 @@ import (
 var DB *gorm.DB
 
 func ConnectDatabase() {
-	DB_USER := os.Getenv("DB_USER")
-	DB_PASS := os.Getenv("DB_PASSWORD")
-	DB_NAME := os.Getenv("DB_NAME")
-	INSTANCE_CONNECTION_NAME := os.Getenv("INSTANCE_CONNECTION_NAME")
+	MYSQL_HOST := os.Getenv("MYSQL_HOST")
+	MYSQL_PORT := os.Getenv("MYSQL_PORT")
+	MYSQL_USER := os.Getenv("MYSQL_USER")
+	MYSQL_PASSWORD := os.Getenv("MYSQL_PASSWORD")
+	MYSQL_DATABASE := os.Getenv("MYSQL_DATABASE")
 
-	dbURI := fmt.Sprintf("%s:%s@unix(/cloudsql/%s)/%s?parseTime=true",
-		DB_USER, DB_PASS, INSTANCE_CONNECTION_NAME, DB_NAME)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		MYSQL_USER, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_PORT, MYSQL_DATABASE)
 
-	dbPool, err := sql.Open("mysql", dbURI)
-	if err != nil {
-		log.Fatalf("Could not connect to the database: %v", err)
-	}
-
-	database, err := gorm.Open(mysql.New(mysql.Config{
-		Conn: dbPool,
-	}), &gorm.Config{})
+	database, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	if err != nil {
-		log.Fatalf("Could not connect to the database: %v", err)
+		panic("Failed to connect to database!")
 	}
 
+	err = database.AutoMigrate(&User{})
+	if err != nil {
+		return
+	}
 	DB = database
 }
