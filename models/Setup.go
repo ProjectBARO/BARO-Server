@@ -30,5 +30,11 @@ func ConnectDatabase() {
 	if err != nil {
 		return
 	}
+
+	err = database.AutoMigrate(&Video{})
+	if err != nil {
+		return
+	}
+
 	DB = database
 }

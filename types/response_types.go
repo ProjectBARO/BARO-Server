@@ -18,3 +18,9 @@ type ResponseUser struct {
 	Age      int    `json:"age"`
 	Gender   string `json:"gender"`
 }
+
+type ResponseVideo struct {
+	VideoID      string `json:"video_id"`
+	Title        string `json:"title"`
+	ThumbnailUrl string `json:"thumbnail_url"`
+}

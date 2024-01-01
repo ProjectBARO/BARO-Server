@@ -37,6 +37,9 @@ func main() {
 	userService := services.NewUserService(models.DB)
 	userController := controllers.NewUserController(userService)
 
+	videoService := services.NewVideoService(models.DB)
+	videoController := controllers.NewVideoController(videoService)
+
 	openAPI := router.Group("/")
 	{
 		openAPI.GET("/health", controllers.HealthCheckController{}.HealthCheck)
@@ -49,6 +52,8 @@ func main() {
 		secureAPI.GET("/users/me", func(c *gin.Context) { userController.GetUserInfo(c) })
 		secureAPI.PUT("/users/me", func(c *gin.Context) { userController.UpdateUserInfo(c) })
 		secureAPI.DELETE("/users/me", func(c *gin.Context) { userController.DeleteUser(c) })
+
+		secureAPI.GET("/videos", func(c *gin.Context) { videoController.GetVideos(c) })
 	}
 
 	port := os.Getenv("PORT")

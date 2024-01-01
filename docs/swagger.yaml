@@ -142,6 +142,23 @@ paths:
       summary: Update user information
       tags:
       - Users
+  /videos:
+    get:
+      consumes:
+      - application/json
+      description: Get all videos
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - Bearer: []
+      summary: Get videos
+      tags:
+      - Videos
 securityDefinitions:
   Bearer:
     in: header
