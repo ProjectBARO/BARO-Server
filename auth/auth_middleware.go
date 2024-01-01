@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 	"gdsc/baro/models"
+	"gdsc/baro/types"
 	"net/http"
 	"strings"
 
@@ -25,13 +26,21 @@ func (a *authenticationMiddleware) StripTokenMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := getTokenFromRequest(c.Request)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(400, types.Response{
+				Status:  400,
+				Message: err.Error(),
+				Data:    "failed",
+			})
 			return
 		}
 
 		claim, err := ValidateToken(token, a.secret)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.JSON(400, types.Response{
+				Status:  400,
+				Message: err.Error(),
+				Data:    "failed",
+			})
 			return
 		}
 
@@ -57,13 +66,21 @@ func getTokenFromRequest(r *http.Request) (string, error) {
 func FindCurrentUser(c *gin.Context) *models.User {
 	userID, exists := c.Get(string(UserIDKey))
 	if !exists {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not Found UserID!"})
+		c.JSON(400, types.Response{
+			Status:  400,
+			Message: "Not Found UserID in Context!",
+			Data:    "failed",
+		})
 		return nil
 	}
 
 	var user models.User
 	if err := models.DB.Where("id = ?", userID).First(&user).Error; err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Not Found User!"})
+		c.JSON(400, types.Response{
+			Status:  400,
+			Message: "Not Found User!",
+			Data:    "failed",
+		})
 		return nil
 	}
 

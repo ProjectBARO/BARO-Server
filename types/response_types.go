@@ -1,5 +1,11 @@
 package types
 
+type Response struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
 type ResponseToken struct {
 	Token string `json:"token"`
 }
