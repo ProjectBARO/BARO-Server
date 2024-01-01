@@ -29,6 +29,14 @@ func (repo *UserRepository) FindByID(id uint) (models.User, error) {
 	return user, result.Error
 }
 
+func (repo *UserRepository) FindOrCreateByEmail(user *models.User) (*models.User, error) {
+	err := repo.DB.Where(models.User{Email: user.Email}).Attrs(user).FirstOrCreate(user).Error
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 func (repo *UserRepository) FindByEmail(email string) (*models.User, error) {
 	var user models.User
 	result := repo.DB.Where("email = ?", email).First(&user)
