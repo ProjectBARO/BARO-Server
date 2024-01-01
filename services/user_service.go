@@ -27,31 +27,7 @@ func (service *UserService) generateToken(userID uint) (string, error) {
 }
 
 func (service *UserService) Login(input types.RequestCreateUser) (types.ResponseToken, error) {
-	existingUser, dbErr := service.UserRepository.FindByEmail(input.Email)
-	if dbErr != nil && dbErr.Error() == "record not found" {
-		responseToken, registerErr := service.RegisterUser(input)
-		if registerErr != nil {
-			return types.ResponseToken{}, registerErr
-		}
-
-		return responseToken, nil
-	}
-
-	if existingUser != nil {
-		token, err := service.generateToken(existingUser.ID)
-		if err != nil {
-			return types.ResponseToken{}, err
-		}
-
-		responseToken := types.ResponseToken{Token: token}
-		return responseToken, nil
-	}
-
-	return types.ResponseToken{}, dbErr
-}
-
-func (service *UserService) RegisterUser(input types.RequestCreateUser) (types.ResponseToken, error) {
-	userToCreate := models.User{
+	requestCreateUser := models.User{
 		Name:     input.Name,
 		Nickname: input.Name,
 		Email:    input.Email,
@@ -59,12 +35,12 @@ func (service *UserService) RegisterUser(input types.RequestCreateUser) (types.R
 		Gender:   input.Gender,
 	}
 
-	newUser, err := service.UserRepository.Create(&userToCreate)
+	user, err := service.UserRepository.FindOrCreateByEmail(&requestCreateUser)
 	if err != nil {
 		return types.ResponseToken{}, err
 	}
 
-	token, err := service.generateToken(newUser.ID)
+	token, err := service.generateToken(user.ID)
 	if err != nil {
 		return types.ResponseToken{}, err
 	}

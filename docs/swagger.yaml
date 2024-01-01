@@ -1,0 +1,150 @@
+definitions:
+  types.RequestCreateUser:
+    properties:
+      age:
+        type: integer
+      email:
+        type: string
+      gender:
+        type: string
+      name:
+        type: string
+    required:
+    - email
+    - name
+    type: object
+  types.RequestUpdateUser:
+    properties:
+      age:
+        type: integer
+      gender:
+        type: string
+      nickname:
+        type: string
+    type: object
+  types.Response:
+    properties:
+      data: {}
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: HealthCheck
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: HealthCheck
+      tags:
+      - HealthCheck
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Log in if the user exists, if not, register a new user
+      parameters:
+      - description: user info to login or register
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/types.RequestCreateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.Response'
+      summary: Login or register user
+      tags:
+      - Users
+  /users/me:
+    delete:
+      consumes:
+      - application/json
+      description: Delete the currently logged in user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - Bearer: []
+      summary: Delete user
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Get information about the currently logged in user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - Bearer: []
+      summary: Get user information
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Update information about the currently logged in user
+      parameters:
+      - description: user info to update
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/types.RequestUpdateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/types.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/types.Response'
+      security:
+      - Bearer: []
+      summary: Update user information
+      tags:
+      - Users
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
