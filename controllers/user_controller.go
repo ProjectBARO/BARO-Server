@@ -36,6 +36,14 @@ func (controller *UserController) LoginOrRegisterUser(c *gin.Context) {
 		return
 	}
 
+	if err := input.Validate(); err != nil {
+		c.JSON(400, types.Response{
+			Status:  400,
+			Message: err.Error(),
+		})
+		return
+	}
+
 	token, err := controller.UserService.Login(input)
 	if err != nil {
 		c.JSON(400, types.Response{
@@ -91,6 +99,14 @@ func (controller *UserController) GetUserInfo(c *gin.Context) {
 func (controller *UserController) UpdateUserInfo(c *gin.Context) {
 	var input types.RequestUpdateUser
 	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, types.Response{
+			Status:  400,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	if err := input.Validate(); err != nil {
 		c.JSON(400, types.Response{
 			Status:  400,
 			Message: err.Error(),
