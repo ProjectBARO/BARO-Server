@@ -2,22 +2,21 @@ package services
 
 import (
 	"fmt"
-	"gdsc/baro/auth"
-	"gdsc/baro/models"
-	"gdsc/baro/models/repositories"
-	"gdsc/baro/types"
+	"gdsc/baro/app/user/models"
+	"gdsc/baro/app/user/repositories"
+	"gdsc/baro/app/user/types"
+	"gdsc/baro/global/auth"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type UserService struct {
 	UserRepository *repositories.UserRepository
 }
 
-func NewUserService(db *gorm.DB) *UserService {
+func NewUserService(userRepository *repositories.UserRepository) *UserService {
 	return &UserService{
-		UserRepository: repositories.NewUserRepository(db),
+		UserRepository: userRepository,
 	}
 }
 
@@ -49,7 +48,10 @@ func (service *UserService) Login(input types.RequestCreateUser) (types.Response
 }
 
 func (service *UserService) GetUserInfo(c *gin.Context) (types.ResponseUser, error) {
-	user := auth.FindCurrentUser(c)
+	user, err := service.FindCurrentUser(c)
+	if err != nil {
+		return types.ResponseUser{}, err
+	}
 
 	responseUser := types.ResponseUser{
 		ID:       user.ID,
@@ -63,13 +65,16 @@ func (service *UserService) GetUserInfo(c *gin.Context) (types.ResponseUser, err
 }
 
 func (service *UserService) UpdateUserInfo(c *gin.Context, input types.RequestUpdateUser) (types.ResponseUser, error) {
-	user := auth.FindCurrentUser(c)
+	user, err := service.FindCurrentUser(c)
+	if err != nil {
+		return types.ResponseUser{}, err
+	}
 
 	service.updateUser(user, input)
 
-	updatedUser, err := service.UserRepository.Update(user)
-	if err != nil {
-		return types.ResponseUser{}, err
+	updatedUser, updateErr := service.UserRepository.Update(user)
+	if updateErr != nil {
+		return types.ResponseUser{}, updateErr
 	}
 
 	responseUser := types.ResponseUser{
@@ -99,7 +104,24 @@ func (service *UserService) updateUser(user *models.User, input types.RequestUpd
 }
 
 func (service *UserService) DeleteUser(c *gin.Context) error {
-	user := auth.FindCurrentUser(c)
+	user, err := service.FindCurrentUser(c)
+	if err != nil {
+		return err
+	}
 
 	return service.UserRepository.Delete(user)
+}
+
+func (service *UserService) FindCurrentUser(c *gin.Context) (*models.User, error) {
+	userID, exists := c.Get(string(auth.UserIDKey))
+	if !exists {
+		return nil, fmt.Errorf("not found user id")
+	}
+
+	user, err := service.UserRepository.FindByID(userID.(string))
+	if err != nil {
+		return nil, fmt.Errorf("not found user")
+	}
+
+	return &user, nil
 }

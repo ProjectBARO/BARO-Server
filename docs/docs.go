@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/health": {
             "get": {
-                "description": "HealthCheck",
+                "description": "서버가 정상 작동 중인지 확인합니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,12 +27,12 @@ const docTemplate = `{
                 "tags": [
                     "HealthCheck"
                 ],
-                "summary": "HealthCheck",
+                "summary": "서버 상태 확인",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.Response"
+                            "$ref": "#/definitions/global.Response"
                         }
                     }
                 }
@@ -40,7 +40,7 @@ const docTemplate = `{
         },
         "/login": {
             "post": {
-                "description": "Log in if the user exists, if not, register a new user",
+                "description": "토큰을 반환합니다. (첫 로그인 시 회원가입이 진행 후 토큰을 반환합니다.)",
                 "consumes": [
                     "application/json"
                 ],
@@ -50,10 +50,10 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "Login or register user",
+                "summary": "로그인 (첫 로그인 시 회원가입)",
                 "parameters": [
                     {
-                        "description": "user info to login or register",
+                        "description": "사용자 정보",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -66,13 +66,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.Response"
+                            "$ref": "#/definitions/global.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/types.Response"
+                            "$ref": "#/definitions/global.Response"
                         }
                     }
                 }
@@ -85,7 +85,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Get information about the currently logged in user",
+                "description": "현재 로그인한 사용자의 정보를 조회합니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -95,18 +95,18 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "Get user information",
+                "summary": "내 정보 조회",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.Response"
+                            "$ref": "#/definitions/global.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/types.Response"
+                            "$ref": "#/definitions/global.Response"
                         }
                     }
                 }
@@ -117,7 +117,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Update information about the currently logged in user",
+                "description": "현재 로그인한 사용자의 정보를 수정합니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -127,10 +127,10 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "Update user information",
+                "summary": "내 정보 수정",
                 "parameters": [
                     {
-                        "description": "user info to update",
+                        "description": "수정할 사용자 정보",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -143,13 +143,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.Response"
+                            "$ref": "#/definitions/global.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/types.Response"
+                            "$ref": "#/definitions/global.Response"
                         }
                     }
                 }
@@ -160,7 +160,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Delete the currently logged in user",
+                "description": "현재 로그인한 사용자의 정보를 삭제합니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -170,18 +170,18 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "Delete user",
+                "summary": "내 정보 삭제 (회원 탈퇴)",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.Response"
+                            "$ref": "#/definitions/global.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/types.Response"
+                            "$ref": "#/definitions/global.Response"
                         }
                     }
                 }
@@ -194,7 +194,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Get all videos",
+                "description": "설정한 키워드에 맞는 유튜브 영상 목록 50개를 조회합니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -204,12 +204,12 @@ const docTemplate = `{
                 "tags": [
                     "Videos"
                 ],
-                "summary": "Get videos",
+                "summary": "유튜브 영상 목록 조회 (현재 키워드: 거북이, 스트레칭)",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/types.Response"
+                            "$ref": "#/definitions/global.Response"
                         }
                     }
                 }
@@ -217,6 +217,18 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "global.Response": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
         "types.RequestCreateUser": {
             "type": "object",
             "required": [
@@ -249,18 +261,6 @@ const docTemplate = `{
                 },
                 "nickname": {
                     "type": "string"
-                }
-            }
-        },
-        "types.Response": {
-            "type": "object",
-            "properties": {
-                "data": {},
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "integer"
                 }
             }
         }
