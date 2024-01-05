@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"gdsc/baro/models"
+	"gdsc/baro/app/user/models"
 
 	"gorm.io/gorm"
 )
@@ -23,7 +23,7 @@ func (repo *UserRepository) Create(user *models.User) (models.User, error) {
 	return *user, nil
 }
 
-func (repo *UserRepository) FindByID(id uint) (models.User, error) {
+func (repo *UserRepository) FindByID(id string) (models.User, error) {
 	var user models.User
 	result := repo.DB.Where("id = ?", id).First(&user)
 	return user, result.Error

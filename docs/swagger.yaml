@@ -1,4 +1,12 @@
 definitions:
+  global.Response:
+    properties:
+      data: {}
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
   types.RequestCreateUser:
     properties:
       age:
@@ -22,14 +30,6 @@ definitions:
       nickname:
         type: string
     type: object
-  types.Response:
-    properties:
-      data: {}
-      message:
-        type: string
-      status:
-        type: integer
-    type: object
 info:
   contact: {}
 paths:
@@ -37,24 +37,24 @@ paths:
     get:
       consumes:
       - application/json
-      description: HealthCheck
+      description: 서버가 정상 작동 중인지 확인합니다.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.Response'
-      summary: HealthCheck
+            $ref: '#/definitions/global.Response'
+      summary: 서버 상태 확인
       tags:
       - HealthCheck
   /login:
     post:
       consumes:
       - application/json
-      description: Log in if the user exists, if not, register a new user
+      description: 토큰을 반환합니다. (첫 로그인 시 회원가입이 진행 후 토큰을 반환합니다.)
       parameters:
-      - description: user info to login or register
+      - description: 사용자 정보
         in: body
         name: user
         required: true
@@ -66,61 +66,61 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.Response'
+            $ref: '#/definitions/global.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/types.Response'
-      summary: Login or register user
+            $ref: '#/definitions/global.Response'
+      summary: 로그인 (첫 로그인 시 회원가입)
       tags:
       - Users
   /users/me:
     delete:
       consumes:
       - application/json
-      description: Delete the currently logged in user
+      description: 현재 로그인한 사용자의 정보를 삭제합니다.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.Response'
+            $ref: '#/definitions/global.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/types.Response'
+            $ref: '#/definitions/global.Response'
       security:
       - Bearer: []
-      summary: Delete user
+      summary: 내 정보 삭제 (회원 탈퇴)
       tags:
       - Users
     get:
       consumes:
       - application/json
-      description: Get information about the currently logged in user
+      description: 현재 로그인한 사용자의 정보를 조회합니다.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.Response'
+            $ref: '#/definitions/global.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/types.Response'
+            $ref: '#/definitions/global.Response'
       security:
       - Bearer: []
-      summary: Get user information
+      summary: 내 정보 조회
       tags:
       - Users
     put:
       consumes:
       - application/json
-      description: Update information about the currently logged in user
+      description: 현재 로그인한 사용자의 정보를 수정합니다.
       parameters:
-      - description: user info to update
+      - description: 수정할 사용자 정보
         in: body
         name: user
         required: true
@@ -132,31 +132,31 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.Response'
+            $ref: '#/definitions/global.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/types.Response'
+            $ref: '#/definitions/global.Response'
       security:
       - Bearer: []
-      summary: Update user information
+      summary: 내 정보 수정
       tags:
       - Users
   /videos:
     get:
       consumes:
       - application/json
-      description: Get all videos
+      description: 설정한 키워드에 맞는 유튜브 영상 목록 50개를 조회합니다.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/types.Response'
+            $ref: '#/definitions/global.Response'
       security:
       - Bearer: []
-      summary: Get videos
+      summary: '유튜브 영상 목록 조회 (현재 키워드: 거북이, 스트레칭)'
       tags:
       - Videos
 securityDefinitions:

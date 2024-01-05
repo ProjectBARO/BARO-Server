@@ -1,8 +1,11 @@
-package models
+package config
 
 import (
 	"fmt"
 	"os"
+
+	userModel "gdsc/baro/app/user/models"
+	videoModel "gdsc/baro/app/video/models"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -10,7 +13,7 @@ import (
 
 var DB *gorm.DB
 
-func ConnectDatabase() {
+func ConnectDatabase() (*gorm.DB, error) {
 	MYSQL_HOST := os.Getenv("MYSQL_HOST")
 	MYSQL_PORT := os.Getenv("MYSQL_PORT")
 	MYSQL_USER := os.Getenv("MYSQL_USER")
@@ -26,15 +29,17 @@ func ConnectDatabase() {
 		panic("Failed to connect to database!")
 	}
 
-	err = database.AutoMigrate(&User{})
-	if err != nil {
-		return
+	userErr := database.AutoMigrate(&userModel.User{})
+	if userErr != nil {
+		return nil, userErr
 	}
 
-	err = database.AutoMigrate(&Video{})
-	if err != nil {
-		return
+	videoErr := database.AutoMigrate(&videoModel.Video{})
+	if videoErr != nil {
+		return nil, videoErr
 	}
 
 	DB = database
+
+	return DB, nil
 }

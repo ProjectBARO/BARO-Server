@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"gdsc/baro/models"
+	"gdsc/baro/app/video/models"
 
 	"gorm.io/gorm"
 )

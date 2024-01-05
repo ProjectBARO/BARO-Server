@@ -1,22 +1,20 @@
-package controllers
+package global
 
 import (
-	"gdsc/baro/types"
-
 	"github.com/gin-gonic/gin"
 )
 
 type HealthCheckController struct{}
 
 // @Tags HealthCheck
-// @Summary HealthCheck
-// @Description HealthCheck
+// @Summary 서버 상태 확인
+// @Description 서버가 정상 작동 중인지 확인합니다.
 // @Accept  json
 // @Produce  json
-// @Success 200 {object} types.Response
+// @Success 200 {object} Response
 // @Router /health [get]
 func (h HealthCheckController) HealthCheck(c *gin.Context) {
-	c.JSON(200, types.Response{
+	c.JSON(200, Response{
 		Status:  200,
 		Message: "서버 정상 작동 중",
 		Data:    "OK",

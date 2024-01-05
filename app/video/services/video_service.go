@@ -1,20 +1,19 @@
 package services
 
 import (
-	"gdsc/baro/models/repositories"
-	"gdsc/baro/types"
+	"gdsc/baro/app/video/repositories"
+	"gdsc/baro/app/video/types"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type VideoService struct {
 	VideoRepository *repositories.VideoRepository
 }
 
-func NewVideoService(db *gorm.DB) *VideoService {
+func NewVideoService(videoRepository *repositories.VideoRepository) *VideoService {
 	return &VideoService{
-		VideoRepository: repositories.NewVideoRepository(db),
+		VideoRepository: videoRepository,
 	}
 }
 
