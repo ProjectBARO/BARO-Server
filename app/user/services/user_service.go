@@ -6,17 +6,20 @@ import (
 	"gdsc/baro/app/user/repositories"
 	"gdsc/baro/app/user/types"
 	"gdsc/baro/global/auth"
+	"gdsc/baro/global/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
 type UserService struct {
 	UserRepository *repositories.UserRepository
+	UserUtil       *utils.UserUtil
 }
 
-func NewUserService(userRepository *repositories.UserRepository) *UserService {
+func NewUserService(userRepository *repositories.UserRepository, userUtil *utils.UserUtil) *UserService {
 	return &UserService{
 		UserRepository: userRepository,
+		UserUtil:       userUtil,
 	}
 }
 
@@ -48,7 +51,7 @@ func (service *UserService) Login(input types.RequestCreateUser) (types.Response
 }
 
 func (service *UserService) GetUserInfo(c *gin.Context) (types.ResponseUser, error) {
-	user, err := service.FindCurrentUser(c)
+	user, err := service.UserUtil.FindCurrentUser(c)
 	if err != nil {
 		return types.ResponseUser{}, err
 	}
@@ -65,7 +68,7 @@ func (service *UserService) GetUserInfo(c *gin.Context) (types.ResponseUser, err
 }
 
 func (service *UserService) UpdateUserInfo(c *gin.Context, input types.RequestUpdateUser) (types.ResponseUser, error) {
-	user, err := service.FindCurrentUser(c)
+	user, err := service.UserUtil.FindCurrentUser(c)
 	if err != nil {
 		return types.ResponseUser{}, err
 	}
@@ -104,24 +107,10 @@ func (service *UserService) updateUser(user *models.User, input types.RequestUpd
 }
 
 func (service *UserService) DeleteUser(c *gin.Context) error {
-	user, err := service.FindCurrentUser(c)
+	user, err := service.UserUtil.FindCurrentUser(c)
 	if err != nil {
 		return err
 	}
 
 	return service.UserRepository.Delete(user)
-}
-
-func (service *UserService) FindCurrentUser(c *gin.Context) (*models.User, error) {
-	userID, exists := c.Get(string(auth.UserIDKey))
-	if !exists {
-		return nil, fmt.Errorf("not found user id")
-	}
-
-	user, err := service.UserRepository.FindByID(userID.(string))
-	if err != nil {
-		return nil, fmt.Errorf("not found user")
-	}
-
-	return &user, nil
 }

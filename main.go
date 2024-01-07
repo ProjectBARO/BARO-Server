@@ -1,6 +1,9 @@
 package main
 
 import (
+	reportController "gdsc/baro/app/report/controllers"
+	reportRepository "gdsc/baro/app/report/repositories"
+	reportService "gdsc/baro/app/report/services"
 	userController "gdsc/baro/app/user/controllers"
 	userRepository "gdsc/baro/app/user/repositories"
 	userService "gdsc/baro/app/user/services"
@@ -11,6 +14,7 @@ import (
 	"gdsc/baro/global"
 	"gdsc/baro/global/auth"
 	"gdsc/baro/global/config"
+	"gdsc/baro/global/utils"
 	"log"
 	"os"
 
@@ -20,9 +24,10 @@ import (
 )
 
 type App struct {
-	UserCtrl  *userController.UserController
-	VideoCtrl *videoController.VideoController
-	Router    *gin.Engine
+	UserCtrl   *userController.UserController
+	ReportCtrl *reportController.ReportController
+	VideoCtrl  *videoController.VideoController
+	Router     *gin.Engine
 }
 
 func (app *App) Init() {
@@ -51,8 +56,14 @@ func (app *App) InitRouter() {
 	}
 
 	userRepository := userRepository.NewUserRepository(DB)
-	userService := userService.NewUserService(userRepository)
+	userUtil := utils.NewUserUtil(userRepository)
+
+	userService := userService.NewUserService(userRepository, userUtil)
 	app.UserCtrl = userController.NewUserController(userService)
+
+	reportRepository := reportRepository.NewReportRepository(DB)
+	reportService := reportService.NewReportService(reportRepository, userUtil)
+	app.ReportCtrl = reportController.NewReportController(reportService)
 
 	videoRepository := videoRepository.NewVideoRepository(DB)
 	videoService := videoService.NewVideoService(videoRepository)
@@ -70,6 +81,10 @@ func (app *App) InitRouter() {
 		secureAPI.GET("/users/me", func(c *gin.Context) { app.UserCtrl.GetUserInfo(c) })
 		secureAPI.PUT("/users/me", func(c *gin.Context) { app.UserCtrl.UpdateUserInfo(c) })
 		secureAPI.DELETE("/users/me", func(c *gin.Context) { app.UserCtrl.DeleteUser(c) })
+
+		secureAPI.POST("/predict", func(c *gin.Context) { app.ReportCtrl.Predict(c) })
+		secureAPI.GET("/predict", func(c *gin.Context) { app.ReportCtrl.GetPredict(c) })
+		secureAPI.GET("/predict/all", func(c *gin.Context) { app.ReportCtrl.GetPredicts(c) })
 
 		secureAPI.GET("/videos", func(c *gin.Context) { app.VideoCtrl.GetVideos(c) })
 	}
