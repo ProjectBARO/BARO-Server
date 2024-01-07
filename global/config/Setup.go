@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	reportModel "gdsc/baro/app/report/models"
 	userModel "gdsc/baro/app/user/models"
 	videoModel "gdsc/baro/app/video/models"
 
@@ -32,6 +33,11 @@ func ConnectDatabase() (*gorm.DB, error) {
 	userErr := database.AutoMigrate(&userModel.User{})
 	if userErr != nil {
 		return nil, userErr
+	}
+
+	reportErr := database.AutoMigrate(&reportModel.Report{})
+	if reportErr != nil {
+		return nil, reportErr
 	}
 
 	videoErr := database.AutoMigrate(&videoModel.Video{})
