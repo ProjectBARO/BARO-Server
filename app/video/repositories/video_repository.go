@@ -6,6 +6,10 @@ import (
 	"gorm.io/gorm"
 )
 
+type VideoRepositoryInterface interface {
+	FindAll() ([]models.Video, error)
+}
+
 type VideoRepository struct {
 	DB *gorm.DB
 }

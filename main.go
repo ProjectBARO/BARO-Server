@@ -73,6 +73,7 @@ func (app *App) InitRouter() {
 	{
 		openAPI.GET("/health", global.HealthCheckController{}.HealthCheck)
 		openAPI.POST("/login", func(c *gin.Context) { app.UserCtrl.LoginOrRegisterUser(c) })
+		openAPI.GET("/videos", func(c *gin.Context) { app.VideoCtrl.GetVideos(c) })
 	}
 
 	secureAPI := app.Router.Group("/")
@@ -85,8 +86,6 @@ func (app *App) InitRouter() {
 		secureAPI.POST("/predict", func(c *gin.Context) { app.ReportCtrl.Predict(c) })
 		secureAPI.GET("/predict", func(c *gin.Context) { app.ReportCtrl.GetPredict(c) })
 		secureAPI.GET("/predict/all", func(c *gin.Context) { app.ReportCtrl.GetPredicts(c) })
-
-		secureAPI.GET("/videos", func(c *gin.Context) { app.VideoCtrl.GetVideos(c) })
 	}
 }
 

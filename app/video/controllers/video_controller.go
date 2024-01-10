@@ -8,10 +8,10 @@ import (
 )
 
 type VideoController struct {
-	VideoService *services.VideoService
+	VideoService services.VideoServiceInterface
 }
 
-func NewVideoController(videoService *services.VideoService) *VideoController {
+func NewVideoController(videoService services.VideoServiceInterface) *VideoController {
 	return &VideoController{
 		VideoService: videoService,
 	}
@@ -22,7 +22,7 @@ func NewVideoController(videoService *services.VideoService) *VideoController {
 // @Description 설정한 키워드에 맞는 유튜브 영상 목록 50개를 조회합니다.
 // @Accept  json
 // @Produce  json
-// @Security Bearer
+
 // @Success 200 {object} global.Response
 // @Router /videos [get]
 func (controller *VideoController) GetVideos(c *gin.Context) {
