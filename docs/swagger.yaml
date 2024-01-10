@@ -230,8 +230,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/global.Response'
-      security:
-      - Bearer: []
       summary: '유튜브 영상 목록 조회 (현재 키워드: 거북이, 스트레칭)'
       tags:
       - Videos

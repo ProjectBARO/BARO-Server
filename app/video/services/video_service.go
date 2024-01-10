@@ -7,11 +7,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type VideoService struct {
-	VideoRepository *repositories.VideoRepository
+type VideoServiceInterface interface {
+	GetVideos(c *gin.Context) ([]types.ResponseVideo, error)
 }
 
-func NewVideoService(videoRepository *repositories.VideoRepository) *VideoService {
+type VideoService struct {
+	VideoRepository repositories.VideoRepositoryInterface
+}
+
+func NewVideoService(videoRepository repositories.VideoRepositoryInterface) *VideoService {
 	return &VideoService{
 		VideoRepository: videoRepository,
 	}

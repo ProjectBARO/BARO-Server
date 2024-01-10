@@ -289,11 +289,6 @@
         },
         "/videos": {
             "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
                 "description": "설정한 키워드에 맞는 유튜브 영상 목록 50개를 조회합니다.",
                 "consumes": [
                     "application/json"
