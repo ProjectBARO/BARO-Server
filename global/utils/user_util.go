@@ -9,11 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type UserUtil struct {
-	UserRepository *repositories.UserRepository
+type UserUtilInterface interface {
+	FindCurrentUser(c *gin.Context) (*models.User, error)
 }
 
-func NewUserUtil(userRepository *repositories.UserRepository) *UserUtil {
+type UserUtil struct {
+	UserRepository repositories.UserRepositoryInterface
+}
+
+func NewUserUtil(userRepository repositories.UserRepositoryInterface) *UserUtil {
 	return &UserUtil{
 		UserRepository: userRepository,
 	}

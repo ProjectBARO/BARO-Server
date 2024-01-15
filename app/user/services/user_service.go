@@ -11,12 +11,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type UserService struct {
-	UserRepository *repositories.UserRepository
-	UserUtil       *utils.UserUtil
+type UserServiceInterface interface {
+	Login(input types.RequestCreateUser) (types.ResponseToken, error)
+	GetUserInfo(c *gin.Context) (types.ResponseUser, error)
+	UpdateUserInfo(c *gin.Context, input types.RequestUpdateUser) (types.ResponseUser, error)
+	DeleteUser(c *gin.Context) error
 }
 
-func NewUserService(userRepository *repositories.UserRepository, userUtil *utils.UserUtil) *UserService {
+type UserService struct {
+	UserRepository repositories.UserRepositoryInterface
+	UserUtil       utils.UserUtilInterface
+}
+
+func NewUserService(userRepository repositories.UserRepositoryInterface, userUtil utils.UserUtilInterface) *UserService {
 	return &UserService{
 		UserRepository: userRepository,
 		UserUtil:       userUtil,
