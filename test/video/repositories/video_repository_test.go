@@ -1,4 +1,4 @@
-package repositories
+package repositories_test
 
 import (
 	"gdsc/baro/app/video/repositories"
