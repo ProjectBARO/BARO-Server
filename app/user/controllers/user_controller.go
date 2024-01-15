@@ -9,10 +9,10 @@ import (
 )
 
 type UserController struct {
-	UserService *services.UserService
+	UserService services.UserServiceInterface
 }
 
-func NewUserController(userService *services.UserService) *UserController {
+func NewUserController(userService services.UserServiceInterface) *UserController {
 	return &UserController{
 		UserService: userService,
 	}

@@ -6,6 +6,15 @@ import (
 	"gorm.io/gorm"
 )
 
+type UserRepositoryInterface interface {
+	Create(user *models.User) (models.User, error)
+	FindByID(id string) (models.User, error)
+	FindOrCreateByEmail(user *models.User) (*models.User, error)
+	FindByEmail(email string) (*models.User, error)
+	Update(user *models.User) (models.User, error)
+	Delete(user *models.User) error
+}
+
 type UserRepository struct {
 	DB *gorm.DB
 }
