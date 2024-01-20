@@ -14,8 +14,10 @@ import (
 	"gdsc/baro/global"
 	"gdsc/baro/global/auth"
 	"gdsc/baro/global/config"
+	pbrouter "gdsc/baro/global/router"
 	"gdsc/baro/global/utils"
 	"log"
+	"net"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -31,15 +33,28 @@ type App struct {
 }
 
 func (app *App) Init() {
-	app.DocsInit()
+	app.InitDocs()
 	app.InitRouter()
 }
 
-func (app *App) DocsInit() {
+func (app *App) InitDocs() {
 	docs.SwaggerInfo.Title = "Baro Server API"
 	docs.SwaggerInfo.Description = "This is a Baro Server API Document"
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.BasePath = "/"
+}
+
+func (app *App) RunGrpcServer(userRepository userRepository.UserRepositoryInterface, userUtil utils.UserUtilInterface, videoRepository videoRepository.VideoRepositoryInterface) {
+	grpcServer := pbrouter.NewInitApp(userRepository, userUtil, videoRepository)
+
+	lis, err := net.Listen("tcp", ":9000")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
 
 func (app *App) InitRouter() {
@@ -68,6 +83,8 @@ func (app *App) InitRouter() {
 	videoRepository := videoRepository.NewVideoRepository(DB)
 	videoService := videoService.NewVideoService(videoRepository)
 	app.VideoCtrl = videoController.NewVideoController(videoService)
+
+	go app.RunGrpcServer(userRepository, userUtil, videoRepository)
 
 	openAPI := app.Router.Group("/")
 	{
