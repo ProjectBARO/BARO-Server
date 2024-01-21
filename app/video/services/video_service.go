@@ -9,6 +9,7 @@ import (
 
 type VideoServiceInterface interface {
 	GetVideos(c *gin.Context) ([]types.ResponseVideo, error)
+	GetVideosByCategory(c *gin.Context) ([]types.ResponseVideo, error)
 }
 
 type VideoService struct {
@@ -33,6 +34,28 @@ func (service *VideoService) GetVideos(c *gin.Context) ([]types.ResponseVideo, e
 			VideoID:      video.VideoID,
 			Title:        video.Title,
 			ThumbnailUrl: video.ThumbnailUrl,
+			Category:     video.Category,
+		})
+	}
+
+	return responseVideos, nil
+}
+
+func (service *VideoService) GetVideosByCategory(c *gin.Context) ([]types.ResponseVideo, error) {
+	category := c.Query("keyword")
+
+	videos, err := service.VideoRepository.FindByCategory(category)
+	if err != nil {
+		return nil, err
+	}
+
+	var responseVideos []types.ResponseVideo
+	for _, video := range videos {
+		responseVideos = append(responseVideos, types.ResponseVideo{
+			VideoID:      video.VideoID,
+			Title:        video.Title,
+			ThumbnailUrl: video.ThumbnailUrl,
+			Category:     video.Category,
 		})
 	}
 
