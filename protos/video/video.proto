@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package video;
+
+option go_package = "baro/protos/video";
+
+service VideoService {
+  rpc GetVideos (GetVideosRequest) returns (VideosResponse) {}
+}
+
+message VideoMessage {
+    string video_id = 1;
+    string title = 2;
+    string thumbnail_url = 3;
+}
+
+message GetVideosRequest {}
+
+message VideosResponse {
+    repeated VideoMessage videos = 1;
+}

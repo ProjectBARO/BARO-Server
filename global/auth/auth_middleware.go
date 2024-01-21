@@ -1,12 +1,16 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"gdsc/baro/global"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 type ContextKey string
@@ -60,4 +64,30 @@ func getTokenFromRequest(r *http.Request) (string, error) {
 	}
 
 	return strings.TrimSpace(splitToken[1]), nil
+}
+
+func UnaryAuthInterceptor(c context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	if info.FullMethod == "/video.VideoService/GetVideos" || info.FullMethod == "/user.UserService/Login" {
+		return handler(c, req)
+	}
+
+	md, ok := metadata.FromIncomingContext(c)
+	if !ok {
+		return nil, errors.New("missing metadata")
+	}
+
+	authHeader, ok := md["Authorization"]
+	if !ok || len(authHeader) == 0 {
+		return nil, errors.New("authorization header is required")
+	}
+
+	token := strings.TrimPrefix(authHeader[0], "Bearer ")
+	claim, err := ValidateToken(token, os.Getenv("JWT_SECRET"))
+	if err != nil {
+		return nil, errors.New("invalid token")
+	}
+
+	c = context.WithValue(c, UserIDKey, claim["sub"])
+
+	return handler(c, req)
 }

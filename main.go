@@ -14,11 +14,14 @@ import (
 	"gdsc/baro/global"
 	"gdsc/baro/global/auth"
 	"gdsc/baro/global/config"
+	pbrouter "gdsc/baro/global/router"
 	"gdsc/baro/global/utils"
 	"log"
+	"net"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/soheilhy/cmux"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -31,15 +34,30 @@ type App struct {
 }
 
 func (app *App) Init() {
-	app.DocsInit()
+	app.InitDocs()
 	app.InitRouter()
 }
 
-func (app *App) DocsInit() {
+func (app *App) InitDocs() {
 	docs.SwaggerInfo.Title = "Baro Server API"
 	docs.SwaggerInfo.Description = "This is a Baro Server API Document"
 	docs.SwaggerInfo.Version = "1.0"
 	docs.SwaggerInfo.BasePath = "/"
+}
+
+func (app *App) RunGrpcServer(l net.Listener, userRepository userRepository.UserRepositoryInterface, userUtil utils.UserUtilInterface, videoRepository videoRepository.VideoRepositoryInterface) {
+	grpcServer := pbrouter.NewInitApp(userRepository, userUtil, videoRepository)
+
+	if err := grpcServer.Serve(l); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+}
+
+func (app *App) RunHttpServer(l net.Listener) {
+	err := app.Router.RunListener(l)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (app *App) InitRouter() {
@@ -101,8 +119,31 @@ func main() {
 		port = "8080"
 	}
 
-	err := app.Router.Run(":" + port)
+	l, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		return
+		log.Fatal(err)
+	}
+
+	m := cmux.New(l)
+
+	grpcL := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
+	httpL := m.Match(cmux.Any())
+
+	DB, connectionErr := config.ConnectDatabase()
+	if connectionErr != nil {
+		log.Fatal(connectionErr)
+	}
+
+	userRepository := userRepository.NewUserRepository(DB)
+	userUtil := utils.NewUserUtil(userRepository)
+
+	videoRepository := videoRepository.NewVideoRepository(DB)
+
+	go app.RunGrpcServer(grpcL, userRepository, userUtil, videoRepository)
+	go app.RunHttpServer(httpL)
+
+	err = m.Serve()
+	if err != nil {
+		log.Fatal(err)
 	}
 }
