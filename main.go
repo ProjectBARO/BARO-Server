@@ -92,6 +92,7 @@ func (app *App) InitRouter() {
 		openAPI.GET("/health", global.HealthCheckController{}.HealthCheck)
 		openAPI.POST("/login", func(c *gin.Context) { app.UserCtrl.LoginOrRegisterUser(c) })
 		openAPI.GET("/videos", func(c *gin.Context) { app.VideoCtrl.GetVideos(c) })
+		openAPI.GET("/videos/category", func(c *gin.Context) { app.VideoCtrl.GetVideosByCategory(c) })
 	}
 
 	secureAPI := app.Router.Group("/")

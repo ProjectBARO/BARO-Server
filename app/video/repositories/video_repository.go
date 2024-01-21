@@ -8,6 +8,7 @@ import (
 
 type VideoRepositoryInterface interface {
 	FindAll() ([]models.Video, error)
+	FindByCategory(category string) ([]models.Video, error)
 }
 
 type VideoRepository struct {
@@ -24,6 +25,17 @@ func (r *VideoRepository) FindAll() ([]models.Video, error) {
 	var videos []models.Video
 
 	result := r.DB.Find(&videos)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return videos, nil
+}
+
+func (r *VideoRepository) FindByCategory(category string) ([]models.Video, error) {
+	var videos []models.Video
+
+	result := r.DB.Where("category = ?", category).Find(&videos)
 	if result.Error != nil {
 		return nil, result.Error
 	}
