@@ -67,7 +67,9 @@ func getTokenFromRequest(r *http.Request) (string, error) {
 }
 
 func UnaryAuthInterceptor(c context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	if info.FullMethod == "/video.VideoService/GetVideos" || info.FullMethod == "/user.UserService/Login" {
+	if info.FullMethod == "/video.VideoService/GetVideos" ||
+		info.FullMethod == "/video.VideoService/GetVideosByCategory" ||
+		info.FullMethod == "/user.UserService/Login" {
 		return handler(c, req)
 	}
 

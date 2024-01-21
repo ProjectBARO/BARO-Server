@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type VideoServiceClient interface {
 	GetVideos(ctx context.Context, in *GetVideosRequest, opts ...grpc.CallOption) (*VideosResponse, error)
+	GetVideosByCategory(ctx context.Context, in *GetVideosByCategoryRequest, opts ...grpc.CallOption) (*VideosResponse, error)
 }
 
 type videoServiceClient struct {
@@ -42,11 +43,21 @@ func (c *videoServiceClient) GetVideos(ctx context.Context, in *GetVideosRequest
 	return out, nil
 }
 
+func (c *videoServiceClient) GetVideosByCategory(ctx context.Context, in *GetVideosByCategoryRequest, opts ...grpc.CallOption) (*VideosResponse, error) {
+	out := new(VideosResponse)
+	err := c.cc.Invoke(ctx, "/video.VideoService/GetVideosByCategory", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // VideoServiceServer is the server API for VideoService service.
 // All implementations must embed UnimplementedVideoServiceServer
 // for forward compatibility
 type VideoServiceServer interface {
 	GetVideos(context.Context, *GetVideosRequest) (*VideosResponse, error)
+	GetVideosByCategory(context.Context, *GetVideosByCategoryRequest) (*VideosResponse, error)
 	mustEmbedUnimplementedVideoServiceServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedVideoServiceServer struct {
 
 func (UnimplementedVideoServiceServer) GetVideos(context.Context, *GetVideosRequest) (*VideosResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetVideos not implemented")
+}
+func (UnimplementedVideoServiceServer) GetVideosByCategory(context.Context, *GetVideosByCategoryRequest) (*VideosResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetVideosByCategory not implemented")
 }
 func (UnimplementedVideoServiceServer) mustEmbedUnimplementedVideoServiceServer() {}
 
@@ -88,6 +102,24 @@ func _VideoService_GetVideos_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _VideoService_GetVideosByCategory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetVideosByCategoryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).GetVideosByCategory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/video.VideoService/GetVideosByCategory",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).GetVideosByCategory(ctx, req.(*GetVideosByCategoryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // VideoService_ServiceDesc is the grpc.ServiceDesc for VideoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var VideoService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetVideos",
 			Handler:    _VideoService_GetVideos_Handler,
+		},
+		{
+			MethodName: "GetVideosByCategory",
+			Handler:    _VideoService_GetVideosByCategory_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
