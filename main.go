@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/soheilhy/cmux"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -44,16 +45,18 @@ func (app *App) InitDocs() {
 	docs.SwaggerInfo.BasePath = "/"
 }
 
-func (app *App) RunGrpcServer(userRepository userRepository.UserRepositoryInterface, userUtil utils.UserUtilInterface, videoRepository videoRepository.VideoRepositoryInterface) {
+func (app *App) RunGrpcServer(l net.Listener, userRepository userRepository.UserRepositoryInterface, userUtil utils.UserUtilInterface, videoRepository videoRepository.VideoRepositoryInterface) {
 	grpcServer := pbrouter.NewInitApp(userRepository, userUtil, videoRepository)
 
-	lis, err := net.Listen("tcp", ":9000")
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-
-	if err := grpcServer.Serve(lis); err != nil {
+	if err := grpcServer.Serve(l); err != nil {
 		log.Fatalf("failed to serve: %v", err)
+	}
+}
+
+func (app *App) RunHttpServer(l net.Listener) {
+	err := app.Router.RunListener(l)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -83,8 +86,6 @@ func (app *App) InitRouter() {
 	videoRepository := videoRepository.NewVideoRepository(DB)
 	videoService := videoService.NewVideoService(videoRepository)
 	app.VideoCtrl = videoController.NewVideoController(videoService)
-
-	go app.RunGrpcServer(userRepository, userUtil, videoRepository)
 
 	openAPI := app.Router.Group("/")
 	{
@@ -118,8 +119,31 @@ func main() {
 		port = "8080"
 	}
 
-	err := app.Router.Run(":" + port)
+	l, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		return
+		log.Fatal(err)
+	}
+
+	m := cmux.New(l)
+
+	grpcL := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
+	httpL := m.Match(cmux.Any())
+
+	DB, connectionErr := config.ConnectDatabase()
+	if connectionErr != nil {
+		log.Fatal(connectionErr)
+	}
+
+	userRepository := userRepository.NewUserRepository(DB)
+	userUtil := utils.NewUserUtil(userRepository)
+
+	videoRepository := videoRepository.NewVideoRepository(DB)
+
+	go app.RunGrpcServer(grpcL, userRepository, userUtil, videoRepository)
+	go app.RunHttpServer(httpL)
+
+	err = m.Serve()
+	if err != nil {
+		log.Fatal(err)
 	}
 }
