@@ -6,15 +6,21 @@ option go_package = "baro/protos/video";
 
 service VideoService {
   rpc GetVideos (GetVideosRequest) returns (VideosResponse) {}
+  rpc GetVideosByCategory (GetVideosByCategoryRequest) returns (VideosResponse) {}
 }
 
 message VideoMessage {
     string video_id = 1;
     string title = 2;
     string thumbnail_url = 3;
+    string category = 4;
 }
 
 message GetVideosRequest {}
+
+message GetVideosByCategoryRequest {
+    string category = 1;
+}
 
 message VideosResponse {
     repeated VideoMessage videos = 1;
