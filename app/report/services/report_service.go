@@ -4,6 +4,7 @@ import (
 	"gdsc/baro/app/report/models"
 	"gdsc/baro/app/report/repositories"
 	"gdsc/baro/app/report/types"
+	usermodel "gdsc/baro/app/user/models"
 	"gdsc/baro/global/utils"
 	"log"
 	"os"
@@ -22,6 +23,8 @@ type ReportServiceInterface interface {
 	FindById(c *gin.Context, id uint) (types.ResponseReport, error)
 	FindReportSummaryByMonth(c *gin.Context, yearAndMonth string) ([]types.ResponseReportSummary, error)
 	FindAll() ([]types.ResponseReport, error)
+	HandleRequest(url string, user usermodel.User, input types.RequestAnalysis)
+	ParseHTML(n *html.Node) string
 }
 
 type ReportService struct {
@@ -44,10 +47,7 @@ func (service *ReportService) Analysis(c *gin.Context, input types.RequestAnalys
 
 	REQUEST_URL := os.Getenv("AI_SERVER_API_URL")
 
-	u, err := url.Parse(REQUEST_URL)
-	if err != nil {
-		return "Not Found AI Server", err
-	}
+	u, _ := url.Parse(REQUEST_URL)
 
 	q := u.Query()
 	q.Add("video_url", input.VideoURL)
@@ -55,59 +55,60 @@ func (service *ReportService) Analysis(c *gin.Context, input types.RequestAnalys
 
 	message := "Video submitted successfully"
 
-	go func() {
-		req, err := http.NewRequest("POST", u.String(), nil)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		client := &http.Client{}
-		response, err := client.Do(req)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		defer response.Body.Close()
-
-		doc, err := html.Parse(response.Body)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		report := models.Report{
-			UserID:       user.ID,
-			AlertCount:   input.AlertCount,
-			AnalysisTime: input.AnalysisTime,
-			Type:         input.Type,
-		}
-
-		// TODO: refactor, AI Server Change to return JSON
-		var f func(*html.Node) string
-		f = func(n *html.Node) string {
-			if n.Type == html.ElementNode && n.Data == "p" {
-				return n.FirstChild.Data
-			}
-			for c := n.FirstChild; c != nil; c = c.NextSibling {
-				result := f(c)
-				if strings.TrimSpace(result) != "" {
-					return result
-				}
-			}
-			return ""
-		}
-
-		report.Predict = f(doc)
-		err = service.ReportRepository.Save(&report)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-	}()
+	go service.HandleRequest(u.String(), *user, input)
 
 	return message, nil
+}
+
+func (service *ReportService) HandleRequest(url string, user usermodel.User, input types.RequestAnalysis) {
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	client := &http.Client{}
+	response, err := client.Do(req)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	defer response.Body.Close()
+
+	doc, err := html.Parse(response.Body)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	report := models.Report{
+		UserID:       user.ID,
+		AlertCount:   input.AlertCount,
+		AnalysisTime: input.AnalysisTime,
+		Type:         input.Type,
+	}
+
+	report.Predict = service.ParseHTML(doc)
+
+	_, err = service.ReportRepository.Save(&report)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+}
+
+func (service *ReportService) ParseHTML(n *html.Node) string {
+	if n.Type == html.ElementNode && n.Data == "p" {
+		return n.FirstChild.Data
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		result := service.ParseHTML(c)
+		if strings.TrimSpace(result) != "" {
+			return result
+		}
+	}
+	return ""
 }
 
 func (service *ReportService) FindReportByCurrentUser(c *gin.Context) ([]types.ResponseReport, error) {

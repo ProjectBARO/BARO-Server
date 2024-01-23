@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -28,6 +29,9 @@ func (m *MockUserService) Login(input types.RequestCreateUser) (types.ResponseTo
 
 func (m *MockUserService) GetUserInfo(c *gin.Context) (types.ResponseUser, error) {
 	args := m.Called(c)
+	if args.Get(0) == nil {
+		return types.ResponseUser{}, args.Error(1)
+	}
 	return args.Get(0).(types.ResponseUser), args.Error(1)
 }
 
@@ -77,11 +81,11 @@ func TestUserController_LoginOrRegisterUser(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/login", nil)
 	req.Body = io.NopCloser(mockRequestBody(input))
-	ctx, _ := gin.CreateTestContext(w)
-	ctx.Request = req
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
 	// Call the method under test
-	userController.LoginOrRegisterUser(ctx)
+	userController.LoginOrRegisterUser(c)
 
 	// Assert that the expectations were met
 	mockService.AssertExpectations(t)
@@ -97,6 +101,45 @@ func TestUserController_LoginOrRegisterUser(t *testing.T) {
 	// Check the results
 	assert.Equal(t, http.StatusOK, response.Status)
 	assert.Equal(t, "success", response.Message)
+	assert.Equal(t, types.ResponseToken{}, response.Data)
+}
+
+func TestUserController_LoginOrRegisterUser_InvalidInput_Email(t *testing.T) {
+	// Mock UserService
+	mockService := new(MockUserService)
+
+	// Create UserController with the mock service
+	userController := controllers.NewUserController(mockService)
+
+	// Create a sample request for the test
+	input := types.RequestCreateUser{
+		Name:   "test",
+		Email:  "test",
+		Age:    20,
+		Gender: "male",
+	}
+
+	// Create a test context using httptest
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/login", nil)
+	req.Body = io.NopCloser(mockRequestBody(input))
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	// Call the method under test
+	userController.LoginOrRegisterUser(c)
+
+	// Validate the response
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	// Parse the response body
+	var response ResponseToken
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.Nil(t, err)
+
+	// Check the results
+	assert.Equal(t, http.StatusBadRequest, response.Status)
+	assert.Equal(t, "Key: 'RequestCreateUser.Email' Error:Field validation for 'Email' failed on the 'email' tag", response.Message)
 	assert.Equal(t, types.ResponseToken{}, response.Data)
 }
 
@@ -123,11 +166,11 @@ func TestUserController_GetUserInfo(t *testing.T) {
 	// Create a test context using httptest
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/users/me", nil)
-	ctx, _ := gin.CreateTestContext(w)
-	ctx.Request = req
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
 	// Call the method under test
-	userController.GetUserInfo(ctx)
+	userController.GetUserInfo(c)
 
 	// Assert that the expectations were met
 	mockService.AssertExpectations(t)
@@ -144,6 +187,42 @@ func TestUserController_GetUserInfo(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.Status)
 	assert.Equal(t, "success", response.Message)
 	assert.Equal(t, expectedUser, response.Data)
+}
+
+func TestUserController_GetUserInfo_Error(t *testing.T) {
+	// Mock UserService
+	mockService := new(MockUserService)
+
+	// Create UserController with the mock service
+	userController := controllers.NewUserController(mockService)
+
+	// Set up expectations for the mock service
+	mockService.On("GetUserInfo", mock.Anything).Return(types.ResponseUser{}, errors.New("user not found"))
+
+	// Create a test context using httptest
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/users/me", nil)
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	// Call the method under test
+	userController.GetUserInfo(c)
+
+	// Assert that the expectations were met
+	mockService.AssertExpectations(t)
+
+	// Validate the response
+	assert.Equal(t, 400, w.Code)
+
+	// Parse the response body
+	var response ResponseUser
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.Nil(t, err)
+
+	// Check the results
+	assert.Equal(t, 400, response.Status)
+	assert.Equal(t, "user not found", response.Message)
+	assert.Equal(t, types.ResponseUser{}, response.Data)
 }
 
 func TestUserController_UpdateUserInfo(t *testing.T) {
@@ -175,11 +254,11 @@ func TestUserController_UpdateUserInfo(t *testing.T) {
 	// Create a test context using httptest
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", "/users/me", mockRequestBody(input))
-	ctx, _ := gin.CreateTestContext(w)
-	ctx.Request = req
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
 	// Call the method under test
-	userController.UpdateUserInfo(ctx)
+	userController.UpdateUserInfo(c)
 
 	// Assert that the expectations were met
 	mockService.AssertExpectations(t)
@@ -211,11 +290,11 @@ func TestUserController_DeleteUser(t *testing.T) {
 	// Create a test context using httptest
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("DELETE", "/users/me", nil)
-	ctx, _ := gin.CreateTestContext(w)
-	ctx.Request = req
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
 	// Call the method under test
-	userController.DeleteUser(ctx)
+	userController.DeleteUser(c)
 
 	// Assert that the expectations were met
 	mockService.AssertExpectations(t)

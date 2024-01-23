@@ -7,7 +7,7 @@ import (
 )
 
 type ReportRepositoryInterface interface {
-	Save(report *models.Report) error
+	Save(report *models.Report) (models.Report, error)
 	FindByUserID(userID uint) ([]models.Report, error)
 	FindById(id uint) (models.Report, error)
 	FindByYearAndMonth(userID uint, month string) ([]models.Report, error)
@@ -24,11 +24,11 @@ func NewReportRepository(db *gorm.DB) *ReportRepository {
 	}
 }
 
-func (repo *ReportRepository) Save(report *models.Report) error {
+func (repo *ReportRepository) Save(report *models.Report) (models.Report, error) {
 	if err := repo.DB.Create(report).Error; err != nil {
-		return err
+		return models.Report{}, err
 	}
-	return nil
+	return *report, nil
 }
 
 func (repo *ReportRepository) FindByUserID(userID uint) ([]models.Report, error) {
