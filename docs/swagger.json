@@ -4,70 +4,7 @@
         "contact": {}
     },
     "paths": {
-        "/health": {
-            "get": {
-                "description": "서버가 정상 작동 중인지 확인합니다.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "HealthCheck"
-                ],
-                "summary": "서버 상태 확인",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/global.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/login": {
-            "post": {
-                "description": "토큰을 반환합니다. (첫 로그인 시 회원가입이 진행 후 토큰을 반환합니다.)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "로그인 (첫 로그인 시 회원가입)",
-                "parameters": [
-                    {
-                        "description": "사용자 정보",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/types.RequestCreateUser"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/global.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/global.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/predict": {
+        "/analysis": {
             "get": {
                 "security": [
                     {
@@ -124,7 +61,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/types.RequestPredict"
+                            "$ref": "#/definitions/types.RequestAnalysis"
                         }
                     }
                 ],
@@ -144,7 +81,7 @@
                 }
             }
         },
-        "/predict/all": {
+        "/analysis/all": {
             "get": {
                 "security": [
                     {
@@ -162,6 +99,155 @@
                     "Reports"
                 ],
                 "summary": "자세 추정 결과 전체 조회 (테스트용)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/global.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/global.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/analysis/summary": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "로그인한 사용자의 자세 추정 결과를 월별로 요약하여 조회합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "자세 추정 결과 월별 요약 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "조회할 년월 (YYYYMM)",
+                        "name": "ym",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/global.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/global.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/analysis/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "보고서 id로 자세 추정 결과를 조회합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "자세 추정 결과 id로 조회",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "자세 추정 결과 id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/global.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/global.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "서버가 정상 작동 중인지 확인합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "HealthCheck"
+                ],
+                "summary": "서버 상태 확인",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/global.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "description": "토큰을 반환합니다. (첫 로그인 시 회원가입이 진행 후 토큰을 반환합니다.)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "로그인 (첫 로그인 시 회원가입)",
+                "parameters": [
+                    {
+                        "description": "사용자 정보",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.RequestCreateUser"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -356,6 +442,29 @@
                 }
             }
         },
+        "types.RequestAnalysis": {
+            "type": "object",
+            "required": [
+                "alert_count",
+                "analysis_time",
+                "type",
+                "video_url"
+            ],
+            "properties": {
+                "alert_count": {
+                    "type": "integer"
+                },
+                "analysis_time": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "video_url": {
+                    "type": "string"
+                }
+            }
+        },
         "types.RequestCreateUser": {
             "type": "object",
             "required": [
@@ -373,17 +482,6 @@
                     "type": "string"
                 },
                 "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "types.RequestPredict": {
-            "type": "object",
-            "required": [
-                "video_url"
-            ],
-            "properties": {
-                "video_url": {
                     "type": "string"
                 }
             }
