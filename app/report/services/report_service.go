@@ -16,29 +16,37 @@ import (
 	"golang.org/x/net/html"
 )
 
-type ReportService struct {
-	ReportRepository *repositories.ReportRepository
-	UserUtil         *utils.UserUtil
+type ReportServiceInterface interface {
+	Analysis(c *gin.Context, input types.RequestAnalysis) (string, error)
+	FindReportByCurrentUser(c *gin.Context) ([]types.ResponseReport, error)
+	FindById(c *gin.Context, id uint) (types.ResponseReport, error)
+	FindReportSummaryByMonth(c *gin.Context, yearAndMonth string) ([]types.ResponseReportSummary, error)
+	FindAll() ([]types.ResponseReport, error)
 }
 
-func NewReportService(reportRepository *repositories.ReportRepository, userUtil *utils.UserUtil) *ReportService {
+type ReportService struct {
+	ReportRepository repositories.ReportRepositoryInterface
+	UserUtil         utils.UserUtilInterface
+}
+
+func NewReportService(reportRepository repositories.ReportRepositoryInterface, userUtil utils.UserUtilInterface) *ReportService {
 	return &ReportService{
 		ReportRepository: reportRepository,
 		UserUtil:         userUtil,
 	}
 }
 
-func (service *ReportService) Predict(c *gin.Context, input types.RequestPredict) (string, error) {
+func (service *ReportService) Analysis(c *gin.Context, input types.RequestAnalysis) (string, error) {
 	user, err := service.UserUtil.FindCurrentUser(c)
 	if err != nil {
-		return "", err
+		return "Not Found User", err
 	}
 
 	REQUEST_URL := os.Getenv("AI_SERVER_API_URL")
 
 	u, err := url.Parse(REQUEST_URL)
 	if err != nil {
-		return "", err
+		return "Not Found AI Server", err
 	}
 
 	q := u.Query()
@@ -70,7 +78,10 @@ func (service *ReportService) Predict(c *gin.Context, input types.RequestPredict
 		}
 
 		report := models.Report{
-			UserID: user.ID,
+			UserID:       user.ID,
+			AlertCount:   input.AlertCount,
+			AnalysisTime: input.AnalysisTime,
+			Type:         input.Type,
 		}
 
 		// TODO: refactor, AI Server Change to return JSON
@@ -99,7 +110,7 @@ func (service *ReportService) Predict(c *gin.Context, input types.RequestPredict
 	return message, nil
 }
 
-func (service *ReportService) FindReportByCurrentUser(c *gin.Context) ([]types.ResponsePredict, error) {
+func (service *ReportService) FindReportByCurrentUser(c *gin.Context) ([]types.ResponseReport, error) {
 	user, err := service.UserUtil.FindCurrentUser(c)
 	if err != nil {
 		return nil, err
@@ -110,12 +121,57 @@ func (service *ReportService) FindReportByCurrentUser(c *gin.Context) ([]types.R
 		return nil, err
 	}
 
-	var responseReports []types.ResponsePredict
+	var responseReports []types.ResponseReport
 	for _, report := range reports {
-		responseReport := types.ResponsePredict{
+		responseReport := types.ResponseReport{
+			ID:           report.ID,
+			UserID:       report.UserID,
+			AlertCount:   report.AlertCount,
+			AnalysisTime: report.AnalysisTime,
+			Predict:      report.Predict,
+			Type:         report.Type,
+			CreatedAt:    report.CreatedAt,
+		}
+		responseReports = append(responseReports, responseReport)
+	}
+
+	return responseReports, nil
+}
+
+func (service *ReportService) FindById(c *gin.Context, id uint) (types.ResponseReport, error) {
+	report, err := service.ReportRepository.FindById(id)
+	if err != nil {
+		return types.ResponseReport{}, err
+	}
+
+	responseReport := types.ResponseReport{
+		ID:           report.ID,
+		UserID:       report.UserID,
+		AlertCount:   report.AlertCount,
+		AnalysisTime: report.AnalysisTime,
+		Predict:      report.Predict,
+		Type:         report.Type,
+		CreatedAt:    report.CreatedAt,
+	}
+
+	return responseReport, nil
+}
+
+func (service *ReportService) FindReportSummaryByMonth(c *gin.Context, yearAndMonth string) ([]types.ResponseReportSummary, error) {
+	user, err := service.UserUtil.FindCurrentUser(c)
+	if err != nil {
+		return nil, err
+	}
+
+	reports, err := service.ReportRepository.FindByYearAndMonth(user.ID, yearAndMonth)
+	if err != nil {
+		return nil, err
+	}
+
+	var responseReports []types.ResponseReportSummary
+	for _, report := range reports {
+		responseReport := types.ResponseReportSummary{
 			ID:        report.ID,
-			UserID:    report.UserID,
-			Predict:   report.Predict,
 			CreatedAt: report.CreatedAt,
 		}
 		responseReports = append(responseReports, responseReport)
@@ -124,19 +180,22 @@ func (service *ReportService) FindReportByCurrentUser(c *gin.Context) ([]types.R
 	return responseReports, nil
 }
 
-func (service *ReportService) FindAll() ([]types.ResponsePredict, error) {
+func (service *ReportService) FindAll() ([]types.ResponseReport, error) {
 	reports, err := service.ReportRepository.FindAll()
 	if err != nil {
 		return nil, err
 	}
 
-	var responseReports []types.ResponsePredict
+	var responseReports []types.ResponseReport
 	for _, report := range reports {
-		responseReport := types.ResponsePredict{
-			ID:        report.ID,
-			UserID:    report.UserID,
-			Predict:   report.Predict,
-			CreatedAt: report.CreatedAt,
+		responseReport := types.ResponseReport{
+			ID:           report.ID,
+			UserID:       report.UserID,
+			AlertCount:   report.AlertCount,
+			AnalysisTime: report.AnalysisTime,
+			Predict:      report.Predict,
+			Type:         report.Type,
+			CreatedAt:    report.CreatedAt,
 		}
 		responseReports = append(responseReports, responseReport)
 	}

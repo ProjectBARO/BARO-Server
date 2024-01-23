@@ -7,6 +7,22 @@ definitions:
       status:
         type: integer
     type: object
+  types.RequestAnalysis:
+    properties:
+      alert_count:
+        type: integer
+      analysis_time:
+        type: integer
+      type:
+        type: string
+      video_url:
+        type: string
+    required:
+    - alert_count
+    - analysis_time
+    - type
+    - video_url
+    type: object
   types.RequestCreateUser:
     properties:
       age:
@@ -21,13 +37,6 @@ definitions:
     - email
     - name
     type: object
-  types.RequestPredict:
-    properties:
-      video_url:
-        type: string
-    required:
-    - video_url
-    type: object
   types.RequestUpdateUser:
     properties:
       age:
@@ -40,6 +49,129 @@ definitions:
 info:
   contact: {}
 paths:
+  /analysis:
+    get:
+      consumes:
+      - application/json
+      description: 로그인한 사용자의 자세 추정 결과를 조회합니다.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/global.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/global.Response'
+      security:
+      - Bearer: []
+      summary: 자세 추정 결과 조회
+      tags:
+      - Reports
+    post:
+      consumes:
+      - application/json
+      description: 자세를 추정합니다. (동영상 URL을 입력받아 자세를 추정합니다.)
+      parameters:
+      - description: 동영상 URL
+        in: body
+        name: video_url
+        required: true
+        schema:
+          $ref: '#/definitions/types.RequestAnalysis'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/global.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/global.Response'
+      security:
+      - Bearer: []
+      summary: 자세 추정 요청
+      tags:
+      - Reports
+  /analysis/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 보고서 id로 자세 추정 결과를 조회합니다.
+      parameters:
+      - description: 자세 추정 결과 id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/global.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/global.Response'
+      security:
+      - Bearer: []
+      summary: 자세 추정 결과 id로 조회
+      tags:
+      - Reports
+  /analysis/all:
+    get:
+      consumes:
+      - application/json
+      description: 자세 추정 결과를 조회합니다.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/global.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/global.Response'
+      security:
+      - Bearer: []
+      summary: 자세 추정 결과 전체 조회 (테스트용)
+      tags:
+      - Reports
+  /analysis/summary:
+    get:
+      consumes:
+      - application/json
+      description: 로그인한 사용자의 자세 추정 결과를 월별로 요약하여 조회합니다.
+      parameters:
+      - description: 조회할 년월 (YYYYMM)
+        in: query
+        name: ym
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/global.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/global.Response'
+      security:
+      - Bearer: []
+      summary: 자세 추정 결과 월별 요약 조회
+      tags:
+      - Reports
   /health:
     get:
       consumes:
@@ -81,75 +213,6 @@ paths:
       summary: 로그인 (첫 로그인 시 회원가입)
       tags:
       - Users
-  /predict:
-    get:
-      consumes:
-      - application/json
-      description: 로그인한 사용자의 자세 추정 결과를 조회합니다.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/global.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/global.Response'
-      security:
-      - Bearer: []
-      summary: 자세 추정 결과 조회
-      tags:
-      - Reports
-    post:
-      consumes:
-      - application/json
-      description: 자세를 추정합니다. (동영상 URL을 입력받아 자세를 추정합니다.)
-      parameters:
-      - description: 동영상 URL
-        in: body
-        name: video_url
-        required: true
-        schema:
-          $ref: '#/definitions/types.RequestPredict'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/global.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/global.Response'
-      security:
-      - Bearer: []
-      summary: 자세 추정 요청
-      tags:
-      - Reports
-  /predict/all:
-    get:
-      consumes:
-      - application/json
-      description: 자세 추정 결과를 조회합니다.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/global.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/global.Response'
-      security:
-      - Bearer: []
-      summary: 자세 추정 결과 전체 조회 (테스트용)
-      tags:
-      - Reports
   /users/me:
     delete:
       consumes:
