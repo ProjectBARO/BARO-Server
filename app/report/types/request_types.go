@@ -10,8 +10,8 @@ func init() {
 
 type RequestAnalysis struct {
 	VideoURL     string `json:"video_url" validate:"required"`
-	AlertCount   uint   `json:"alert_count" validate:"required"`
-	AnalysisTime uint   `json:"analysis_time" validate:"required"`
+	AlertCount   int    `json:"alert_count" validate:"required"`
+	AnalysisTime int    `json:"analysis_time" validate:"required"`
 	Type         string `json:"type" validate:"required"`
 }
 
