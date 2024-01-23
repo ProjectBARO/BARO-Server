@@ -102,9 +102,11 @@ func (app *App) InitRouter() {
 		secureAPI.PUT("/users/me", func(c *gin.Context) { app.UserCtrl.UpdateUserInfo(c) })
 		secureAPI.DELETE("/users/me", func(c *gin.Context) { app.UserCtrl.DeleteUser(c) })
 
-		secureAPI.POST("/predict", func(c *gin.Context) { app.ReportCtrl.Predict(c) })
-		secureAPI.GET("/predict", func(c *gin.Context) { app.ReportCtrl.GetPredict(c) })
-		secureAPI.GET("/predict/all", func(c *gin.Context) { app.ReportCtrl.GetPredicts(c) })
+		secureAPI.POST("/analysis", func(c *gin.Context) { app.ReportCtrl.Analysis(c) })
+		secureAPI.GET("/analysis", func(c *gin.Context) { app.ReportCtrl.GetAnalysis(c) })
+		secureAPI.GET("/analysis/:id", func(c *gin.Context) { app.ReportCtrl.GetAnalysisById(c) })
+		secureAPI.GET("/analysis/summary", func(c *gin.Context) { app.ReportCtrl.GetAnalysisSummary(c) })
+		secureAPI.GET("/analysis/all", func(c *gin.Context) { app.ReportCtrl.GetAnalyzes(c) })
 	}
 }
 
