@@ -62,10 +62,11 @@ func TestUserService_Login(t *testing.T) {
 
 	// Set up sample user for the test
 	input := types.RequestCreateUser{
-		Name:   "test",
-		Email:  "test@gmail.com",
-		Age:    25,
-		Gender: "male",
+		Name:     "test",
+		Email:    "test@gmail.com",
+		Age:      25,
+		Gender:   "male",
+		FcmToken: "test_token",
 	}
 
 	expectedUser := &models.User{
@@ -75,10 +76,12 @@ func TestUserService_Login(t *testing.T) {
 		Email:    input.Email,
 		Age:      input.Age,
 		Gender:   input.Gender,
+		FcmToken: input.FcmToken,
 	}
 
 	// Set up expectations for the mock repository
 	mockRepo.On("FindOrCreateByEmail", mock.AnythingOfType("*models.User")).Return(expectedUser, nil)
+	mockRepo.On("Update", mock.AnythingOfType("*models.User")).Return(*expectedUser, nil)
 
 	// Create UserService with the mock repository
 	userService := services.NewUserService(mockRepo, nil)
