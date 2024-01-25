@@ -67,7 +67,7 @@ const docTemplate = `{
                 "summary": "자세 추정 요청",
                 "parameters": [
                     {
-                        "description": "동영상 URL",
+                        "description": "URL, 알림 횟수 등",
                         "name": "video_url",
                         "in": "body",
                         "required": true,
@@ -133,7 +133,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "로그인한 사용자의 자세 추정 결과를 월별로 요약하여 조회합니다.",
+                "description": "로그인한 사용자의 자세 추정 결과를 월별로 요약하여 조회합니다. (캘린더 점 찍는 용도로 사용)",
                 "consumes": [
                     "application/json"
                 ],
@@ -147,7 +147,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "조회할 년월 (YYYYMM)",
+                        "description": "조회할 년월 (YYYYMM) 예시: 202401 (2024년 1월)",
                         "name": "ym",
                         "in": "query",
                         "required": true
@@ -176,7 +176,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "보고서 id로 자세 추정 결과를 조회합니다.",
+                "description": "보고서 id로 자세 추정 결과를 조회합니다. (요약으로 먼저 보고서 id 조회하고 사용자가 그걸 누르면 이걸 사용하기)",
                 "consumes": [
                     "application/json"
                 ],
@@ -256,6 +256,51 @@ const docTemplate = `{
                         "required": true,
                         "schema": {
                             "$ref": "#/definitions/types.RequestCreateUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/global.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/global.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/fcm-token": {
+            "put": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "FCM 토큰을 업데이트합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "FCM 토큰 업데이트",
+                "parameters": [
+                    {
+                        "description": "FCM 토큰",
+                        "name": "fcm_token",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/types.RequestUpdateFcmToken"
                         }
                     }
                 ],
@@ -456,17 +501,17 @@ const docTemplate = `{
         "types.RequestAnalysis": {
             "type": "object",
             "required": [
-                "alert_count",
-                "analysis_time",
                 "type",
                 "video_url"
             ],
             "properties": {
                 "alert_count": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 0
                 },
                 "analysis_time": {
-                    "type": "integer"
+                    "type": "integer",
+                    "minimum": 0
                 },
                 "type": {
                     "type": "string"
@@ -489,10 +534,24 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
+                "fcm_token": {
+                    "type": "string"
+                },
                 "gender": {
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.RequestUpdateFcmToken": {
+            "type": "object",
+            "required": [
+                "fcm_token"
+            ],
+            "properties": {
+                "fcm_token": {
                     "type": "string"
                 }
             }
