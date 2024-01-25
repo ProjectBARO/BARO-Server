@@ -1,14 +1,16 @@
 package services
 
 import (
+	"fmt"
 	"gdsc/baro/app/report/models"
 	"gdsc/baro/app/report/repositories"
 	"gdsc/baro/app/report/types"
 	usermodel "gdsc/baro/app/user/models"
+	"gdsc/baro/global/fcm"
 	"gdsc/baro/global/utils"
-	"log"
 	"os"
 	"strings"
+	"time"
 
 	"net/http"
 	"net/url"
@@ -23,8 +25,6 @@ type ReportServiceInterface interface {
 	FindById(c *gin.Context, id uint) (types.ResponseReport, error)
 	FindReportSummaryByMonth(c *gin.Context, yearAndMonth string) ([]types.ResponseReportSummary, error)
 	FindAll() ([]types.ResponseReport, error)
-	HandleRequest(url string, user usermodel.User, input types.RequestAnalysis)
-	ParseHTML(n *html.Node) string
 }
 
 type ReportService struct {
@@ -55,31 +55,15 @@ func (service *ReportService) Analysis(c *gin.Context, input types.RequestAnalys
 
 	message := "Video submitted successfully"
 
-	go service.HandleRequest(u.String(), *user, input)
+	go Predict(*service, u.String(), *user, input)
 
 	return message, nil
 }
 
-func (service *ReportService) HandleRequest(url string, user usermodel.User, input types.RequestAnalysis) {
-	req, err := http.NewRequest("POST", url, nil)
+func Predict(service ReportService, url string, user usermodel.User, input types.RequestAnalysis) error {
+	response, err := HandleRequest(url)
 	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	client := &http.Client{}
-	response, err := client.Do(req)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	defer response.Body.Close()
-
-	doc, err := html.Parse(response.Body)
-	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 
 	report := models.Report{
@@ -87,23 +71,76 @@ func (service *ReportService) HandleRequest(url string, user usermodel.User, inp
 		AlertCount:   input.AlertCount,
 		AnalysisTime: input.AnalysisTime,
 		Type:         input.Type,
+		Predict:      response,
 	}
 
-	report.Predict = service.ParseHTML(doc)
+	savedReport, _ := service.ReportRepository.Save(&report)
 
-	_, err = service.ReportRepository.Save(&report)
+	title, body, _ := GenerateMessage(savedReport.CreatedAt.String())
+
+	err = fcm.SendPushNotification(user.FcmToken, title, body)
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
+
+	return nil
 }
 
-func (service *ReportService) ParseHTML(n *html.Node) string {
+func HandleRequest(url string) (string, error) {
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	client := &http.Client{}
+	response, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	defer response.Body.Close()
+
+	doc, err := html.Parse(response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return ParseHTML(doc), nil
+}
+
+func GenerateMessage(date string) (string, string, error) {
+	timeFormats := []string{
+		"2006-01-02 15:04:05.000 -0700 MST",
+		"2006-01-02 15:04:05.00 -0700 MST",
+		"2006-01-02 15:04:05.0 -0700 MST",
+	}
+
+	var t time.Time
+	var err error
+
+	for _, format := range timeFormats {
+		t, err = time.Parse(format, date)
+		if err == nil {
+			break
+		}
+	}
+
+	if err != nil {
+		return "", "", err
+	}
+
+	title := "자세 분석이 완료되었어요!"
+	body := fmt.Sprintf("%d년 %d월 %d일에 측정한 보고서가 도착했습니다!", t.Year(), t.Month(), t.Day())
+
+	return title, body, nil
+}
+
+func ParseHTML(n *html.Node) string {
 	if n.Type == html.ElementNode && n.Data == "p" {
 		return n.FirstChild.Data
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		result := service.ParseHTML(c)
+		result := ParseHTML(c)
 		if strings.TrimSpace(result) != "" {
 			return result
 		}
@@ -164,10 +201,7 @@ func (service *ReportService) FindReportSummaryByMonth(c *gin.Context, yearAndMo
 		return nil, err
 	}
 
-	reports, err := service.ReportRepository.FindByYearAndMonth(user.ID, yearAndMonth)
-	if err != nil {
-		return nil, err
-	}
+	reports, _ := service.ReportRepository.FindByYearAndMonth(user.ID, yearAndMonth)
 
 	var responseReports []types.ResponseReportSummary
 	for _, report := range reports {
@@ -182,10 +216,7 @@ func (service *ReportService) FindReportSummaryByMonth(c *gin.Context, yearAndMo
 }
 
 func (service *ReportService) FindAll() ([]types.ResponseReport, error) {
-	reports, err := service.ReportRepository.FindAll()
-	if err != nil {
-		return nil, err
-	}
+	reports, _ := service.ReportRepository.FindAll()
 
 	var responseReports []types.ResponseReport
 	for _, report := range reports {

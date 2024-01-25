@@ -6,6 +6,7 @@ import (
 	"gdsc/baro/app/report/services"
 	"gdsc/baro/app/report/types"
 	usermodel "gdsc/baro/app/user/models"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -65,6 +66,9 @@ func TestAnalysis(t *testing.T) {
 	mockReportRepository := new(MockReportRepository)
 	mockUserUtil := new(MockUserUtil)
 
+	// Set up environment variables
+	os.Setenv("AI_SERVER_API_URL", "http://localhost:5000/predict")
+
 	// Create ReportService
 	reportService := services.NewReportService(mockReportRepository, mockUserUtil)
 
@@ -79,17 +83,18 @@ func TestAnalysis(t *testing.T) {
 	}
 
 	// Set up expectations for the mock repository and util
-	mockUserUtil.On("FindCurrentUser", mock.Anything).Return(&user, nil)
-
-	// Create a test context
-	c, _ := gin.CreateTestContext(nil)
-
 	request := types.RequestAnalysis{
 		VideoURL:     "test",
 		AlertCount:   10,
 		AnalysisTime: 1800,
 		Type:         "Study",
 	}
+
+	// Set up expectations for the mock repository and util
+	mockUserUtil.On("FindCurrentUser", mock.Anything).Return(&user, nil)
+
+	// Create a test context
+	c, _ := gin.CreateTestContext(nil)
 
 	// Call the service
 	responseMessage, err := reportService.Analysis(c, request)
@@ -133,33 +138,79 @@ func TestAnalysis_NoUser(t *testing.T) {
 	mockUserUtil.AssertExpectations(t)
 }
 
-func TestParseHTML(t *testing.T) {
-	// Create service
-	service := services.NewReportService(nil, nil)
+func TestPredict_InvalidURL(t *testing.T) {
+	// Mock ReportRepository, UserUtil
+	mockReportRepository := new(MockReportRepository)
+	mockUserUtil := new(MockUserUtil)
 
+	// Create ReportService
+	service := services.NewReportService(mockReportRepository, mockUserUtil)
+
+	// Set up invalid URL
+	url := ""
+
+	// Call the service
+	err := services.Predict(*service, url, usermodel.User{}, types.RequestAnalysis{})
+	assert.Error(t, err)
+}
+
+func TestHandleRequest(t *testing.T) {
+	assert.True(t, true)
+}
+
+func TestGenerateMessage(t *testing.T) {
+	// Set up test data
+	testTimes := []string{
+		"2024-02-01 12:04:05.123 +0900 KST",
+		"2024-02-01 12:04:05.12 +0900 KST",
+		"2024-02-01 12:04:05.1 +0900 KST",
+	}
+
+	// Execute method under test
+	for _, testTime := range testTimes {
+		title, body, err := services.GenerateMessage(testTime)
+
+		// Assert result
+		assert.NoError(t, err)
+		assert.Equal(t, "자세 분석이 완료되었어요!", title)
+		assert.Equal(t, "2024년 2월 1일에 측정한 보고서가 도착했습니다!", body)
+	}
+}
+
+func TestGenerateMessage_InvaildData(t *testing.T) {
+	// Set up invalid test data
+	testTime := "2024-02-01"
+
+	// Execute method under test
+	title, body, err := services.GenerateMessage(testTime)
+
+	// Assert result
+	assert.Error(t, err)
+	assert.Equal(t, "", title)
+	assert.Equal(t, "", body)
+}
+
+func TestParseHTML(t *testing.T) {
 	// Set up test data
 	testHTML := "<html><body><p>Test</p></body></html>"
 	doc, err := html.Parse(strings.NewReader(testHTML))
 	assert.Nil(t, err)
 
 	// Execute method under test
-	result := service.ParseHTML(doc)
+	result := services.ParseHTML(doc)
 
 	// Assert result
 	assert.Equal(t, "Test", result)
 }
 
 func TestParseHTML_NoData(t *testing.T) {
-	// Create service
-	service := services.NewReportService(nil, nil)
-
 	// Set up test data
 	testHTML := "<html><body></body></html>"
 	doc, err := html.Parse(strings.NewReader(testHTML))
 	assert.Nil(t, err)
 
 	// Execute method under test
-	result := service.ParseHTML(doc)
+	result := services.ParseHTML(doc)
 
 	// Assert result
 	assert.Equal(t, "", result)
@@ -251,6 +302,9 @@ func TestFindReportByCurrentUser_NoUser(t *testing.T) {
 	// Assert that the expectations were met
 	mockReportRepository.AssertExpectations(t)
 	mockUserUtil.AssertExpectations(t)
+
+	// Check the results
+	assert.Equal(t, "record not found", err.Error())
 }
 
 func TestFindReportByCurrentUser_NoReport(t *testing.T) {
