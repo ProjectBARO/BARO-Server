@@ -101,6 +101,7 @@ func (app *App) InitRouter() {
 		secureAPI.GET("/users/me", func(c *gin.Context) { app.UserCtrl.GetUserInfo(c) })
 		secureAPI.PUT("/users/me", func(c *gin.Context) { app.UserCtrl.UpdateUserInfo(c) })
 		secureAPI.DELETE("/users/me", func(c *gin.Context) { app.UserCtrl.DeleteUser(c) })
+		secureAPI.PUT("/users/fcm-token", func(c *gin.Context) { app.UserCtrl.UpdateFcmToken(c) })
 
 		secureAPI.POST("/analysis", func(c *gin.Context) { app.ReportCtrl.Analysis(c) })
 		secureAPI.GET("/analysis", func(c *gin.Context) { app.ReportCtrl.GetAnalysis(c) })
