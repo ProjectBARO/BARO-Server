@@ -2,19 +2,18 @@ package services_test
 
 import (
 	"errors"
+	"fmt"
 	"gdsc/baro/app/report/models"
 	"gdsc/baro/app/report/services"
 	"gdsc/baro/app/report/types"
 	usermodel "gdsc/baro/app/user/models"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"golang.org/x/net/html"
 )
 
 type MockReportRepository struct {
@@ -158,6 +157,119 @@ func TestHandleRequest(t *testing.T) {
 	assert.True(t, true)
 }
 
+func TestParseAnalysis(t *testing.T) {
+	// response *types.ResponseAnalysis
+	response := types.ResponseAnalysis{
+		Result:       []int{0, 1, 1, 1, 0, 1},
+		HunchedRatio: 10.0,
+		NormalRatio:  90.0,
+		Scores:       []float64{99.9, 92.9, 82.3, 92.4, 69.5},
+		LandmarksInfo: [][]interface{}{
+			{[]float64{0.1, 0.2}, []float64{0.3, 0.4}, 1.0, 45.0},
+			{[]float64{0.5, 0.6}, []float64{0.7, 0.8}, 2.0, 60.0},
+		},
+		StatusFrequencies: map[string]int{"Very Serious": 6},
+	}
+
+	// Execute method under test
+	result, scores, nomalRatio, statusFrequencies, distances, landmarksInfo := services.ParseAnalysis(&response)
+
+	// Assert result
+	assert.Equal(t, response.Result, result)
+	assert.Equal(t, response.Scores, scores)
+	assert.Equal(t, fmt.Sprintf("%.3f", response.NormalRatio), nomalRatio)
+	assert.Equal(t, fmt.Sprintf("%.3f", []float64{1.0, 2.0}), distances)
+	assert.Equal(t, fmt.Sprintf("%.3f", []float64{45.0, 60.0}), landmarksInfo)
+	assert.Equal(t, fmt.Sprintf("%v", []string{"0", "0", "0", "6"}), statusFrequencies)
+}
+
+func TestParseAnalysis_NoStatusFrequencies(t *testing.T) {
+	// response *types.ResponseAnalysis
+	response := types.ResponseAnalysis{
+		Result:       []int{0, 1, 1, 1, 0, 1},
+		HunchedRatio: 10.0,
+		NormalRatio:  90.0,
+		Scores:       []float64{99.9, 92.9, 82.3, 92.4, 69.5},
+		LandmarksInfo: [][]interface{}{
+			{[]float64{0.1, 0.2}, []float64{0.3, 0.4}, 1.0, 45.0},
+			{[]float64{0.5, 0.6}, []float64{0.7, 0.8}, 2.0, 60.0},
+		},
+	}
+
+	// Execute method under test
+	result, scores, nomalRatio, statusFrequencies, distances, landmarksInfo := services.ParseAnalysis(&response)
+
+	// Assert result
+	assert.Equal(t, response.Result, result)
+	assert.Equal(t, response.Scores, scores)
+	assert.Equal(t, fmt.Sprintf("%.3f", response.NormalRatio), nomalRatio)
+	assert.Equal(t, fmt.Sprintf("%.3f", []float64{1.0, 2.0}), distances)
+	assert.Equal(t, fmt.Sprintf("%.3f", []float64{45.0, 60.0}), landmarksInfo)
+	assert.Equal(t, fmt.Sprintf("%v", []string{"0", "0", "0", "0"}), statusFrequencies)
+}
+
+func TestParseAnalysis_FullStatusFrequencies(t *testing.T) {
+	// response *types.ResponseAnalysis
+	response := types.ResponseAnalysis{
+		Result:       []int{0, 1, 1, 1, 0, 1},
+		HunchedRatio: 10.0,
+		NormalRatio:  90.0,
+		Scores:       []float64{99.9, 92.9, 82.3, 92.4, 69.5},
+		LandmarksInfo: [][]interface{}{
+			{[]float64{0.1, 0.2}, []float64{0.3, 0.4}, 1.0, 45.0},
+			{[]float64{0.5, 0.6}, []float64{0.7, 0.8}, 2.0, 60.0},
+		},
+		StatusFrequencies: map[string]int{"Fine": 1, "Danger": 2, "Serious": 1, "Very Serious": 2},
+	}
+
+	// Execute method under test
+	result, scores, nomalRatio, statusFrequencies, distances, landmarksInfo := services.ParseAnalysis(&response)
+
+	// Assert result
+	assert.Equal(t, response.Result, result)
+	assert.Equal(t, response.Scores, scores)
+	assert.Equal(t, fmt.Sprintf("%.3f", response.NormalRatio), nomalRatio)
+	assert.Equal(t, fmt.Sprintf("%.3f", []float64{1.0, 2.0}), distances)
+	assert.Equal(t, fmt.Sprintf("%.3f", []float64{45.0, 60.0}), landmarksInfo)
+	assert.Equal(t, fmt.Sprintf("%v", []string{"1", "2", "1", "2"}), statusFrequencies)
+}
+
+func TestCalculateScores_AllBad(t *testing.T) {
+	// Set up test data
+	testResult := []int{0, 0, 0, 0, 0, 0}
+	testScores := []float64{99.9, 92.9, 92.3, 92.4, 99.5, 92.0}
+
+	// Execute method under test
+	result := services.CalculateScores(testResult, testScores)
+
+	// Assert result
+	assert.Equal(t, "15.00", result)
+}
+
+func TestCalculateScores_HalfGood(t *testing.T) {
+	// Set up test data
+	testResult := []int{0, 0, 0, 1, 1, 1}
+	testScores := []float64{99.9, 92.9, 92.3, 92.4, 99.5, 92.0}
+
+	// Execute method under test
+	result := services.CalculateScores(testResult, testScores)
+
+	// Assert result
+	assert.Equal(t, "57.50", result)
+}
+
+func TestCalculateScores_AllGood(t *testing.T) {
+	// Set up test data
+	testResult := []int{1, 1, 1, 1, 1, 1}
+	testScores := []float64{99.9, 92.9, 92.3, 92.4, 99.5, 92.0}
+
+	// Execute method under test
+	result := services.CalculateScores(testResult, testScores)
+
+	// Assert result
+	assert.Equal(t, "100.00", result)
+}
+
 func TestGenerateMessage(t *testing.T) {
 	// Set up test data
 	testTimes := []string{
@@ -190,32 +302,6 @@ func TestGenerateMessage_InvaildData(t *testing.T) {
 	assert.Equal(t, "", body)
 }
 
-func TestParseHTML(t *testing.T) {
-	// Set up test data
-	testHTML := "<html><body><p>Test</p></body></html>"
-	doc, err := html.Parse(strings.NewReader(testHTML))
-	assert.Nil(t, err)
-
-	// Execute method under test
-	result := services.ParseHTML(doc)
-
-	// Assert result
-	assert.Equal(t, "Test", result)
-}
-
-func TestParseHTML_NoData(t *testing.T) {
-	// Set up test data
-	testHTML := "<html><body></body></html>"
-	doc, err := html.Parse(strings.NewReader(testHTML))
-	assert.Nil(t, err)
-
-	// Execute method under test
-	result := services.ParseHTML(doc)
-
-	// Assert result
-	assert.Equal(t, "", result)
-}
-
 func TestFindReportByCurrentUser(t *testing.T) {
 	// Mock UserRepository, UserUtil
 	mockReportRepository := new(MockReportRepository)
@@ -237,20 +323,30 @@ func TestFindReportByCurrentUser(t *testing.T) {
 	// Set up sample reports for the test
 	reports := []models.Report{
 		{
-			ID:           1,
-			UserID:       1,
-			AlertCount:   10,
-			AnalysisTime: 1800,
-			Predict:      "Good",
-			Type:         "Study",
+			ID:                1,
+			UserID:            1,
+			AlertCount:        10,
+			AnalysisTime:      1800,
+			Type:              "Study",
+			Predict:           "Good",
+			Score:             "90.000",
+			NormalRatio:       "90.000",
+			NeckAngles:        "angle",
+			Distances:         "distance",
+			StatusFrequencies: "status",
 		},
 		{
-			ID:           2,
-			UserID:       1,
-			AlertCount:   30,
-			AnalysisTime: 3600,
-			Predict:      "Good",
-			Type:         "Study",
+			ID:                2,
+			UserID:            1,
+			AlertCount:        10,
+			AnalysisTime:      1800,
+			Type:              "Study",
+			Predict:           "Good",
+			Score:             "90.000",
+			NormalRatio:       "90.000",
+			NeckAngles:        "angle",
+			Distances:         "distance",
+			StatusFrequencies: "status",
 		},
 	}
 
@@ -276,8 +372,13 @@ func TestFindReportByCurrentUser(t *testing.T) {
 		assert.Equal(t, report.UserID, responseReports[i].UserID)
 		assert.Equal(t, report.AlertCount, responseReports[i].AlertCount)
 		assert.Equal(t, report.AnalysisTime, responseReports[i].AnalysisTime)
-		assert.Equal(t, report.Predict, responseReports[i].Predict)
 		assert.Equal(t, report.Type, responseReports[i].Type)
+		assert.Equal(t, report.Predict, responseReports[i].Predict)
+		assert.Equal(t, report.Score, responseReports[i].Score)
+		assert.Equal(t, report.NormalRatio, responseReports[i].NormalRatio)
+		assert.Equal(t, report.NeckAngles, responseReports[i].NeckAngles)
+		assert.Equal(t, report.Distances, responseReports[i].Distances)
+		assert.Equal(t, report.StatusFrequencies, responseReports[i].StatusFrequencies)
 	}
 }
 
@@ -352,12 +453,17 @@ func TestFindById(t *testing.T) {
 
 	// Set up sample report for the test
 	report := models.Report{
-		ID:           1,
-		UserID:       1,
-		AlertCount:   10,
-		AnalysisTime: 1800,
-		Predict:      "Good",
-		Type:         "Study",
+		ID:                1,
+		UserID:            1,
+		AlertCount:        10,
+		AnalysisTime:      1800,
+		Type:              "Study",
+		Predict:           "Good",
+		Score:             "90.000",
+		NormalRatio:       "90.000",
+		NeckAngles:        "angle",
+		Distances:         "distance",
+		StatusFrequencies: "status",
 	}
 
 	// Set up expectations for the mock repository
@@ -379,8 +485,13 @@ func TestFindById(t *testing.T) {
 	assert.Equal(t, report.UserID, responseReport.UserID)
 	assert.Equal(t, report.AlertCount, responseReport.AlertCount)
 	assert.Equal(t, report.AnalysisTime, responseReport.AnalysisTime)
-	assert.Equal(t, report.Predict, responseReport.Predict)
 	assert.Equal(t, report.Type, responseReport.Type)
+	assert.Equal(t, report.Predict, responseReport.Predict)
+	assert.Equal(t, report.Score, responseReport.Score)
+	assert.Equal(t, report.NormalRatio, responseReport.NormalRatio)
+	assert.Equal(t, report.NeckAngles, responseReport.NeckAngles)
+	assert.Equal(t, report.Distances, responseReport.Distances)
+	assert.Equal(t, report.StatusFrequencies, responseReport.StatusFrequencies)
 }
 
 func TestFindById_NoReport(t *testing.T) {
@@ -430,22 +541,32 @@ func TestFindReportSummaryByMonth(t *testing.T) {
 	// Set up sample reports for the test
 	reports := []models.Report{
 		{
-			ID:           1,
-			UserID:       1,
-			AlertCount:   10,
-			AnalysisTime: 1800,
-			Predict:      "Good",
-			Type:         "Study",
-			CreatedAt:    time.Now(),
+			ID:                1,
+			UserID:            1,
+			AlertCount:        10,
+			AnalysisTime:      1800,
+			Type:              "Study",
+			Predict:           "Good",
+			Score:             "90.000",
+			NormalRatio:       "90.000",
+			NeckAngles:        "angle",
+			Distances:         "distance",
+			StatusFrequencies: "status",
+			CreatedAt:         time.Now(),
 		},
 		{
-			ID:           2,
-			UserID:       1,
-			AlertCount:   30,
-			AnalysisTime: 3600,
-			Predict:      "Good",
-			Type:         "Study",
-			CreatedAt:    time.Now(),
+			ID:                2,
+			UserID:            1,
+			AlertCount:        10,
+			AnalysisTime:      1800,
+			Type:              "Study",
+			Predict:           "Good",
+			Score:             "90.000",
+			NormalRatio:       "90.000",
+			NeckAngles:        "angle",
+			Distances:         "distance",
+			StatusFrequencies: "status",
+			CreatedAt:         time.Now(),
 		},
 	}
 
@@ -550,22 +671,32 @@ func TestFindAll(t *testing.T) {
 	// Set up sample reports for the test
 	reports := []models.Report{
 		{
-			ID:           1,
-			UserID:       1,
-			AlertCount:   10,
-			AnalysisTime: 1800,
-			Predict:      "Good",
-			Type:         "Study",
-			CreatedAt:    time.Now(),
+			ID:                1,
+			UserID:            1,
+			AlertCount:        10,
+			AnalysisTime:      1800,
+			Type:              "Study",
+			Predict:           "Good",
+			Score:             "90.000",
+			NormalRatio:       "90.000",
+			NeckAngles:        "angle",
+			Distances:         "distance",
+			StatusFrequencies: "status",
+			CreatedAt:         time.Now(),
 		},
 		{
-			ID:           2,
-			UserID:       1,
-			AlertCount:   30,
-			AnalysisTime: 3600,
-			Predict:      "Good",
-			Type:         "Study",
-			CreatedAt:    time.Now(),
+			ID:                2,
+			UserID:            1,
+			AlertCount:        30,
+			AnalysisTime:      3600,
+			Type:              "Study",
+			Predict:           "Good",
+			Score:             "90.000",
+			NormalRatio:       "90.000",
+			NeckAngles:        "angle",
+			Distances:         "distance",
+			StatusFrequencies: "status",
+			CreatedAt:         time.Now(),
 		},
 	}
 
