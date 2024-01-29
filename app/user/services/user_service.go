@@ -51,10 +51,7 @@ func (service *UserService) Login(input types.RequestCreateUser) (types.Response
 	user.FcmToken = input.FcmToken
 	updatedUser, _ := service.UserRepository.Update(user)
 
-	token, err := service.generateToken(updatedUser.ID)
-	if err != nil {
-		return types.ResponseToken{}, err
-	}
+	token, _ := service.generateToken(updatedUser.ID)
 
 	return types.ResponseToken{Token: token}, nil
 }

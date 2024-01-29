@@ -152,14 +152,6 @@ func (controller *UserController) UpdateUserInfo(c *gin.Context) {
 		return
 	}
 
-	if err := input.Validate(); err != nil {
-		c.JSON(400, global.Response{
-			Status:  400,
-			Message: err.Error(),
-		})
-		return
-	}
-
 	user, err := controller.UserService.UpdateUserInfo(c, input)
 	if err != nil {
 		c.JSON(400, global.Response{

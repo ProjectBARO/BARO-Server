@@ -258,6 +258,30 @@ func TestCalculateScores_HalfGood(t *testing.T) {
 	assert.Equal(t, "57.50", result)
 }
 
+func TestCalculateScores_AllGoodDiffScore(t *testing.T) {
+	// Set up test data
+	testResult := []int{1, 1, 1, 1, 1, 1}
+	testScores := []float64{99.9, 89.9, 79.9, 69.9, 59.9, 49.9}
+
+	// Execute method under test
+	result := services.CalculateScores(testResult, testScores)
+
+	// Assert result
+	assert.Equal(t, "93.83", result)
+}
+
+func TestCalculateScores_AllBadSameScore(t *testing.T) {
+	// Set up test data
+	testResult := []int{0, 0, 0, 0, 0, 0}
+	testScores := []float64{99.9, 89.9, 79.9, 69.9, 59.9, 49.9}
+
+	// Execute method under test
+	result := services.CalculateScores(testResult, testScores)
+
+	// Assert result
+	assert.Equal(t, "24.50", result)
+}
+
 func TestCalculateScores_AllGood(t *testing.T) {
 	// Set up test data
 	testResult := []int{1, 1, 1, 1, 1, 1}
