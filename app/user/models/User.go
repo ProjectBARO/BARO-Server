@@ -9,5 +9,6 @@ type User struct {
 	Email    string `gorm:"unique"`
 	Age      int
 	Gender   string
+	FcmToken string
 	Deleted  gorm.DeletedAt
 }

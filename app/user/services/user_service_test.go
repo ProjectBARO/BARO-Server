@@ -62,10 +62,11 @@ func TestUserService_Login(t *testing.T) {
 
 	// Set up sample user for the test
 	input := types.RequestCreateUser{
-		Name:   "test",
-		Email:  "test@gmail.com",
-		Age:    25,
-		Gender: "male",
+		Name:     "test",
+		Email:    "test@gmail.com",
+		Age:      25,
+		Gender:   "male",
+		FcmToken: "test_token",
 	}
 
 	expectedUser := &models.User{
@@ -75,10 +76,12 @@ func TestUserService_Login(t *testing.T) {
 		Email:    input.Email,
 		Age:      input.Age,
 		Gender:   input.Gender,
+		FcmToken: input.FcmToken,
 	}
 
 	// Set up expectations for the mock repository
 	mockRepo.On("FindOrCreateByEmail", mock.AnythingOfType("*models.User")).Return(expectedUser, nil)
+	mockRepo.On("Update", mock.AnythingOfType("*models.User")).Return(*expectedUser, nil)
 
 	// Create UserService with the mock repository
 	userService := services.NewUserService(mockRepo, nil)
@@ -92,6 +95,123 @@ func TestUserService_Login(t *testing.T) {
 	// Check the results
 	assert.Nil(t, err)
 	assert.NotEmpty(t, responseToken.Token)
+}
+
+func TestUserService_UpdateFcmToken(t *testing.T) {
+	// Mock UserRepository and UserUtil
+	mockRepo := new(MockUserRepository)
+	mockUtil := new(MockUserUtil)
+
+	// Set up sample user for the test
+	input := types.RequestUpdateFcmToken{
+		FcmToken: "new_token",
+	}
+
+	// Set up expectations
+	currentUser := &models.User{
+		ID:       1,
+		Name:     "test",
+		Nickname: "test",
+		Email:    "test@gmail.com",
+		Age:      25,
+		Gender:   "male",
+		FcmToken: "old_token",
+	}
+
+	updatedUser := &models.User{
+		ID:       1,
+		Name:     "test",
+		Nickname: "test",
+		Email:    "test@gmail.com",
+		Age:      25,
+		Gender:   "male",
+		FcmToken: "new_token",
+	}
+
+	// Set up expectations for the mock util
+	mockUtil.On("FindCurrentUser", mock.AnythingOfType("*gin.Context")).Return(currentUser, nil)
+
+	// Set up expectations for the mock repository
+	mockRepo.On("Update", mock.AnythingOfType("*models.User")).Return(*updatedUser, nil)
+
+	// Create UserService with the mock repository and util
+	userService := services.NewUserService(mockRepo, mockUtil)
+
+	// Create a test context
+	ctx, _ := gin.CreateTestContext(nil)
+
+	// Call the method under test
+	err := userService.UpdateFcmToken(ctx, input)
+
+	// Assert that the expectations were met
+	mockUtil.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
+
+	// Check the results
+	assert.Nil(t, err)
+}
+
+func TestUserService_UpdateFcmToken_NoUser(t *testing.T) {
+	// Mock UserRepository
+	mockRepo := new(MockUserRepository)
+	mockUtil := new(MockUserUtil)
+
+	// Set up expectations for the mock util
+	mockUtil.On("FindCurrentUser", mock.AnythingOfType("*gin.Context")).Return((*models.User)(nil), errors.New("user not found"))
+
+	// Create UserService with the mock repository and util
+	userService := services.NewUserService(mockRepo, mockUtil)
+
+	// Create a test context
+	ctx, _ := gin.CreateTestContext(nil)
+
+	// Set up sample user for the test
+	input := types.RequestUpdateFcmToken{
+		FcmToken: "new_token",
+	}
+
+	// Call the method under test
+	err := userService.UpdateFcmToken(ctx, input)
+
+	// Assert that the expectations were met
+	mockUtil.AssertExpectations(t)
+
+	// Check the results
+	assert.NotNil(t, err)
+	assert.EqualError(t, err, "user not found")
+}
+
+func TestUserService_UpdateFcmToken_Error(t *testing.T) {
+	// Mock UserRepository
+	mockRepo := new(MockUserRepository)
+	mockUtil := new(MockUserUtil)
+
+	// Set up expectations for the mock util
+	mockUtil.On("FindCurrentUser", mock.AnythingOfType("*gin.Context")).Return(&models.User{}, nil)
+
+	// Set up sample user for the test
+	input := types.RequestUpdateFcmToken{
+		FcmToken: "new_token",
+	}
+
+	// Set up expectations for the mock repository
+	mockRepo.On("Update", mock.AnythingOfType("*models.User")).Return(models.User{}, errors.New("record not found"))
+
+	// Create UserService with the mock repository and util
+	userService := services.NewUserService(mockRepo, mockUtil)
+
+	// Create a test context
+	ctx, _ := gin.CreateTestContext(nil)
+
+	// Call the method under test
+	err := userService.UpdateFcmToken(ctx, input)
+
+	// Assert that the expectations were met
+	mockUtil.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
+
+	// Check the results
+	assert.NotNil(t, err)
 }
 
 func TestUserService_GetUserInfo(t *testing.T) {

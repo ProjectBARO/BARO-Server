@@ -36,18 +36,23 @@ func TestReportrRepository_Save(t *testing.T) {
 
 	// Create sample report for the test
 	report := models.Report{
-		UserID:       1,
-		AlertCount:   30,
-		AnalysisTime: 3600,
-		Predict:      "Good",
-		Type:         "Study",
-		CreatedAt:    time.Now(),
+		UserID:            1,
+		AlertCount:        30,
+		AnalysisTime:      3600,
+		Type:              "Study",
+		Predict:           "Good",
+		Score:             "90.000",
+		NormalRatio:       "90.000",
+		NeckAngles:        "angle",
+		Distances:         "distance",
+		StatusFrequencies: "status",
+		CreatedAt:         time.Now(),
 	}
 
 	// Set up expectations for the mock DB to return the sample report
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO `reports`").
-		WithArgs(report.UserID, report.AlertCount, report.AnalysisTime, report.Type, report.Predict, report.CreatedAt).
+		WithArgs(report.UserID, report.AlertCount, report.AnalysisTime, report.Type, report.Predict, report.Score, report.NormalRatio, report.NeckAngles, report.Distances, report.StatusFrequencies, report.CreatedAt).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -64,8 +69,14 @@ func TestReportrRepository_Save(t *testing.T) {
 	assert.Equal(t, report.UserID, createdReport.UserID)
 	assert.Equal(t, report.AlertCount, createdReport.AlertCount)
 	assert.Equal(t, report.AnalysisTime, createdReport.AnalysisTime)
-	assert.Equal(t, report.Predict, createdReport.Predict)
 	assert.Equal(t, report.Type, createdReport.Type)
+	assert.Equal(t, report.Predict, createdReport.Predict)
+	assert.Equal(t, report.Score, createdReport.Score)
+	assert.Equal(t, report.NormalRatio, createdReport.NormalRatio)
+	assert.Equal(t, report.NeckAngles, createdReport.NeckAngles)
+	assert.Equal(t, report.Distances, createdReport.Distances)
+	assert.Equal(t, report.StatusFrequencies, createdReport.StatusFrequencies)
+	assert.Equal(t, report.CreatedAt, createdReport.CreatedAt)
 }
 
 func TestReportRepository_Save_Error(t *testing.T) {
@@ -92,18 +103,23 @@ func TestReportRepository_Save_Error(t *testing.T) {
 
 	// Create sample report for the test
 	report := models.Report{
-		UserID:       1,
-		AlertCount:   30,
-		AnalysisTime: 3600,
-		Predict:      "Good",
-		Type:         "Study",
-		CreatedAt:    time.Now(),
+		UserID:            1,
+		AlertCount:        30,
+		AnalysisTime:      3600,
+		Type:              "Study",
+		Predict:           "Good",
+		Score:             "90.000",
+		NormalRatio:       "90.000",
+		NeckAngles:        "angle",
+		Distances:         "distance",
+		StatusFrequencies: "status",
+		CreatedAt:         time.Now(),
 	}
 
 	// Set up expectations for the mock DB to return the sample report
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO `reports`").
-		WithArgs(report.UserID, report.AlertCount, report.AnalysisTime, report.Type, report.Predict, report.CreatedAt).
+		WithArgs(report.UserID, report.AlertCount, report.AnalysisTime, report.Type, report.Predict, report.Score, report.NormalRatio, report.NeckAngles, report.Distances, report.StatusFrequencies, report.CreatedAt).
 		WillReturnError(err)
 	mock.ExpectRollback()
 
@@ -141,18 +157,23 @@ func TestReportRepository_FindByUserID(t *testing.T) {
 
 	// Create sample report for the test
 	report := models.Report{
-		UserID:       1,
-		AlertCount:   30,
-		AnalysisTime: 3600,
-		Predict:      "Good",
-		Type:         "Study",
-		CreatedAt:    time.Now(),
+		UserID:            1,
+		AlertCount:        30,
+		AnalysisTime:      3600,
+		Type:              "Study",
+		Predict:           "Good",
+		Score:             "90.000",
+		NormalRatio:       "90.000",
+		NeckAngles:        "angle",
+		Distances:         "distance",
+		StatusFrequencies: "status",
+		CreatedAt:         time.Now(),
 	}
 
 	// Set up expectations for the mock DB to return the sample report
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO `reports`").
-		WithArgs(report.UserID, report.AlertCount, report.AnalysisTime, report.Type, report.Predict, report.CreatedAt).
+		WithArgs(report.UserID, report.AlertCount, report.AnalysisTime, report.Type, report.Predict, report.Score, report.NormalRatio, report.NeckAngles, report.Distances, report.StatusFrequencies, report.CreatedAt).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -165,8 +186,8 @@ func TestReportRepository_FindByUserID(t *testing.T) {
 	// Set up expectations for the mock DB to return the sample report
 	mock.ExpectQuery("SELECT \\* FROM `reports` WHERE user_id = \\?").
 		WithArgs(report.UserID).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "alert_count", "analysis_time", "type", "predict", "created_at"}).
-			AddRow(savedReport.ID, savedReport.UserID, savedReport.AlertCount, savedReport.AnalysisTime, savedReport.Type, savedReport.Predict, savedReport.CreatedAt))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "alert_count", "analysis_time", "type", "predict", "score", "normal_ratio", "neck_angles", "distances", "status_frequencies", "created_at"}).
+			AddRow(savedReport.ID, savedReport.UserID, savedReport.AlertCount, savedReport.AnalysisTime, savedReport.Type, savedReport.Predict, savedReport.Score, savedReport.NormalRatio, savedReport.NeckAngles, savedReport.Distances, savedReport.StatusFrequencies, savedReport.CreatedAt))
 
 	// Call the method under test
 	reports, err := reportRepository.FindByUserID(report.UserID)
@@ -181,8 +202,14 @@ func TestReportRepository_FindByUserID(t *testing.T) {
 	assert.Equal(t, savedReport.UserID, reports[0].UserID)
 	assert.Equal(t, savedReport.AlertCount, reports[0].AlertCount)
 	assert.Equal(t, savedReport.AnalysisTime, reports[0].AnalysisTime)
-	assert.Equal(t, savedReport.Predict, reports[0].Predict)
 	assert.Equal(t, savedReport.Type, reports[0].Type)
+	assert.Equal(t, savedReport.Predict, reports[0].Predict)
+	assert.Equal(t, savedReport.Score, reports[0].Score)
+	assert.Equal(t, savedReport.NormalRatio, reports[0].NormalRatio)
+	assert.Equal(t, savedReport.NeckAngles, reports[0].NeckAngles)
+	assert.Equal(t, savedReport.Distances, reports[0].Distances)
+	assert.Equal(t, savedReport.StatusFrequencies, reports[0].StatusFrequencies)
+	assert.Equal(t, savedReport.CreatedAt, reports[0].CreatedAt)
 }
 
 func TestReportRepository_FindByUserID_Error(t *testing.T) {
@@ -245,18 +272,23 @@ func TestReportRepository_FindById(t *testing.T) {
 
 	// Create sample report for the test
 	report := models.Report{
-		UserID:       1,
-		AlertCount:   30,
-		AnalysisTime: 3600,
-		Predict:      "Good",
-		Type:         "Study",
-		CreatedAt:    time.Now(),
+		UserID:            1,
+		AlertCount:        30,
+		AnalysisTime:      3600,
+		Type:              "Study",
+		Predict:           "Good",
+		Score:             "90.000",
+		NormalRatio:       "90.000",
+		NeckAngles:        "angle",
+		Distances:         "distance",
+		StatusFrequencies: "status",
+		CreatedAt:         time.Now(),
 	}
 
 	// Set up expectations for the mock DB to return the sample report
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO `reports`").
-		WithArgs(report.UserID, report.AlertCount, report.AnalysisTime, report.Type, report.Predict, report.CreatedAt).
+		WithArgs(report.UserID, report.AlertCount, report.AnalysisTime, report.Type, report.Predict, report.Score, report.NormalRatio, report.NeckAngles, report.Distances, report.StatusFrequencies, report.CreatedAt).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -269,8 +301,8 @@ func TestReportRepository_FindById(t *testing.T) {
 	// Set up expectations for the mock DB to return the sample report
 	mock.ExpectQuery("SELECT \\* FROM `reports` WHERE id = \\?").
 		WithArgs(savedReport.ID).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "alert_count", "analysis_time", "type", "predict", "created_at"}).
-			AddRow(savedReport.ID, savedReport.UserID, savedReport.AlertCount, savedReport.AnalysisTime, savedReport.Type, savedReport.Predict, savedReport.CreatedAt))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "alert_count", "analysis_time", "type", "predict", "score", "normal_ratio", "neck_angles", "distances", "status_frequencies", "created_at"}).
+			AddRow(savedReport.ID, savedReport.UserID, savedReport.AlertCount, savedReport.AnalysisTime, savedReport.Type, savedReport.Predict, savedReport.Score, savedReport.NormalRatio, savedReport.NeckAngles, savedReport.Distances, savedReport.StatusFrequencies, savedReport.CreatedAt))
 
 	// Call the method under test
 	report, err = reportRepository.FindById(savedReport.ID)
@@ -285,8 +317,14 @@ func TestReportRepository_FindById(t *testing.T) {
 	assert.Equal(t, savedReport.UserID, report.UserID)
 	assert.Equal(t, savedReport.AlertCount, report.AlertCount)
 	assert.Equal(t, savedReport.AnalysisTime, report.AnalysisTime)
-	assert.Equal(t, savedReport.Predict, report.Predict)
 	assert.Equal(t, savedReport.Type, report.Type)
+	assert.Equal(t, savedReport.Predict, report.Predict)
+	assert.Equal(t, savedReport.Score, report.Score)
+	assert.Equal(t, savedReport.NormalRatio, report.NormalRatio)
+	assert.Equal(t, savedReport.NeckAngles, report.NeckAngles)
+	assert.Equal(t, savedReport.Distances, report.Distances)
+	assert.Equal(t, savedReport.StatusFrequencies, report.StatusFrequencies)
+	assert.Equal(t, savedReport.CreatedAt, report.CreatedAt)
 }
 
 func TestReportRepository_FindById_Error(t *testing.T) {
@@ -348,18 +386,23 @@ func TestReportRepository_FindByYearAndMonth(t *testing.T) {
 
 	// Create sample report for the test
 	report := models.Report{
-		UserID:       1,
-		AlertCount:   30,
-		AnalysisTime: 3600,
-		Predict:      "Good",
-		Type:         "Study",
-		CreatedAt:    time.Now(),
+		UserID:            1,
+		AlertCount:        30,
+		AnalysisTime:      3600,
+		Type:              "Study",
+		Predict:           "Good",
+		Score:             "90.000",
+		NormalRatio:       "90.000",
+		NeckAngles:        "angle",
+		Distances:         "distance",
+		StatusFrequencies: "status",
+		CreatedAt:         time.Now(),
 	}
 
 	// Set up expectations for the mock DB to return the sample report
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO `reports`").
-		WithArgs(report.UserID, report.AlertCount, report.AnalysisTime, report.Type, report.Predict, report.CreatedAt).
+		WithArgs(report.UserID, report.AlertCount, report.AnalysisTime, report.Type, report.Predict, report.Score, report.NormalRatio, report.NeckAngles, report.Distances, report.StatusFrequencies, report.CreatedAt).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -375,8 +418,8 @@ func TestReportRepository_FindByYearAndMonth(t *testing.T) {
 	// Set up expectations for the mock DB to return the sample report
 	mock.ExpectQuery("SELECT \\* FROM `reports` WHERE user_id = \\? AND DATE_FORMAT\\(created_at, '%Y%m'\\) = \\?").
 		WithArgs(savedReport.UserID, yearAndMonth).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "alert_count", "analysis_time", "type", "predict", "created_at"}).
-			AddRow(savedReport.ID, savedReport.UserID, savedReport.AlertCount, savedReport.AnalysisTime, savedReport.Type, savedReport.Predict, savedReport.CreatedAt))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "alert_count", "analysis_time", "type", "predict", "score", "normal_ratio", "neck_angles", "distances", "status_frequencies", "created_at"}).
+			AddRow(savedReport.ID, savedReport.UserID, savedReport.AlertCount, savedReport.AnalysisTime, savedReport.Type, savedReport.Predict, savedReport.Score, savedReport.NormalRatio, savedReport.NeckAngles, savedReport.Distances, savedReport.StatusFrequencies, savedReport.CreatedAt))
 
 	// Call the method under test
 	reports, err := reportRepository.FindByYearAndMonth(savedReport.UserID, yearAndMonth)
@@ -391,8 +434,14 @@ func TestReportRepository_FindByYearAndMonth(t *testing.T) {
 	assert.Equal(t, savedReport.UserID, reports[0].UserID)
 	assert.Equal(t, savedReport.AlertCount, reports[0].AlertCount)
 	assert.Equal(t, savedReport.AnalysisTime, reports[0].AnalysisTime)
-	assert.Equal(t, savedReport.Predict, reports[0].Predict)
 	assert.Equal(t, savedReport.Type, reports[0].Type)
+	assert.Equal(t, savedReport.Predict, reports[0].Predict)
+	assert.Equal(t, savedReport.Score, reports[0].Score)
+	assert.Equal(t, savedReport.NormalRatio, reports[0].NormalRatio)
+	assert.Equal(t, savedReport.NeckAngles, reports[0].NeckAngles)
+	assert.Equal(t, savedReport.Distances, reports[0].Distances)
+	assert.Equal(t, savedReport.StatusFrequencies, reports[0].StatusFrequencies)
+	assert.Equal(t, savedReport.CreatedAt, reports[0].CreatedAt)
 }
 
 func TestReportRepository_FindByYearAndMonth_Error(t *testing.T) {
@@ -457,18 +506,23 @@ func TestReportRepository_FindAll(t *testing.T) {
 
 	// Create sample report for the test
 	report := models.Report{
-		UserID:       1,
-		AlertCount:   30,
-		AnalysisTime: 3600,
-		Predict:      "Good",
-		Type:         "Study",
-		CreatedAt:    time.Now(),
+		UserID:            1,
+		AlertCount:        30,
+		AnalysisTime:      3600,
+		Type:              "Study",
+		Predict:           "Good",
+		Score:             "90.000",
+		NormalRatio:       "90.000",
+		NeckAngles:        "angle",
+		Distances:         "distance",
+		StatusFrequencies: "status",
+		CreatedAt:         time.Now(),
 	}
 
 	// Set up expectations for the mock DB to return the sample report
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO `reports`").
-		WithArgs(report.UserID, report.AlertCount, report.AnalysisTime, report.Type, report.Predict, report.CreatedAt).
+		WithArgs(report.UserID, report.AlertCount, report.AnalysisTime, report.Type, report.Predict, report.Score, report.NormalRatio, report.NeckAngles, report.Distances, report.StatusFrequencies, report.CreatedAt).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -480,8 +534,8 @@ func TestReportRepository_FindAll(t *testing.T) {
 
 	// Set up expectations for the mock DB to return the sample report
 	mock.ExpectQuery("SELECT \\* FROM `reports`").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "alert_count", "analysis_time", "type", "predict", "created_at"}).
-			AddRow(savedReport.ID, savedReport.UserID, savedReport.AlertCount, savedReport.AnalysisTime, savedReport.Type, savedReport.Predict, savedReport.CreatedAt))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "user_id", "alert_count", "analysis_time", "type", "predict", "score", "normal_ratio", "neck_angles", "distances", "status_frequencies", "created_at"}).
+			AddRow(savedReport.ID, savedReport.UserID, savedReport.AlertCount, savedReport.AnalysisTime, savedReport.Type, savedReport.Predict, savedReport.Score, savedReport.NormalRatio, savedReport.NeckAngles, savedReport.Distances, savedReport.StatusFrequencies, savedReport.CreatedAt))
 
 	// Call the method under test
 	reports, err := reportRepository.FindAll()
@@ -496,8 +550,14 @@ func TestReportRepository_FindAll(t *testing.T) {
 	assert.Equal(t, savedReport.UserID, reports[0].UserID)
 	assert.Equal(t, savedReport.AlertCount, reports[0].AlertCount)
 	assert.Equal(t, savedReport.AnalysisTime, reports[0].AnalysisTime)
-	assert.Equal(t, savedReport.Predict, reports[0].Predict)
 	assert.Equal(t, savedReport.Type, reports[0].Type)
+	assert.Equal(t, savedReport.Predict, reports[0].Predict)
+	assert.Equal(t, savedReport.Score, reports[0].Score)
+	assert.Equal(t, savedReport.NormalRatio, reports[0].NormalRatio)
+	assert.Equal(t, savedReport.NeckAngles, reports[0].NeckAngles)
+	assert.Equal(t, savedReport.Distances, reports[0].Distances)
+	assert.Equal(t, savedReport.StatusFrequencies, reports[0].StatusFrequencies)
+	assert.Equal(t, savedReport.CreatedAt, reports[0].CreatedAt)
 }
 
 func TestReportRepository_FindAll_Error(t *testing.T) {

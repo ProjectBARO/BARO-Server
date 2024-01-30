@@ -62,6 +62,51 @@ func (controller *UserController) LoginOrRegisterUser(c *gin.Context) {
 }
 
 // @Tags Users
+// @Summary FCM 토큰 업데이트
+// @Description FCM 토큰을 업데이트합니다.
+// @Accept  json
+// @Produce  json
+// @Param   fcm_token    body    types.RequestUpdateFcmToken   true    "FCM 토큰"
+// @Success 200 {object} global.Response
+// @Failure 400 {object} global.Response
+// @Security Bearer
+// @Router /users/fcm-token [put]
+func (controller *UserController) UpdateFcmToken(c *gin.Context) {
+	var input types.RequestUpdateFcmToken
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, global.Response{
+			Status:  400,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	if err := input.Validate(); err != nil {
+		c.JSON(400, global.Response{
+			Status:  400,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	err := controller.UserService.UpdateFcmToken(c, input)
+	if err != nil {
+		c.JSON(400, global.Response{
+			Status:  400,
+			Message: err.Error(),
+			Data:    "fail",
+		})
+		return
+	}
+
+	c.JSON(200, global.Response{
+		Status:  200,
+		Message: "success",
+		Data:    "OK",
+	})
+}
+
+// @Tags Users
 // @Summary 내 정보 조회
 // @Description 현재 로그인한 사용자의 정보를 조회합니다.
 // @Accept  json
@@ -100,14 +145,6 @@ func (controller *UserController) GetUserInfo(c *gin.Context) {
 func (controller *UserController) UpdateUserInfo(c *gin.Context) {
 	var input types.RequestUpdateUser
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(400, global.Response{
-			Status:  400,
-			Message: err.Error(),
-		})
-		return
-	}
-
-	if err := input.Validate(); err != nil {
 		c.JSON(400, global.Response{
 			Status:  400,
 			Message: err.Error(),

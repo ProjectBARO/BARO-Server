@@ -13,6 +13,7 @@ import (
 
 type UserServiceInterface interface {
 	Login(input types.RequestCreateUser) (types.ResponseToken, error)
+	UpdateFcmToken(c *gin.Context, input types.RequestUpdateFcmToken) error
 	GetUserInfo(c *gin.Context) (types.ResponseUser, error)
 	UpdateUserInfo(c *gin.Context, input types.RequestUpdateUser) (types.ResponseUser, error)
 	DeleteUser(c *gin.Context) error
@@ -42,19 +43,32 @@ func (service *UserService) Login(input types.RequestCreateUser) (types.Response
 		Email:    input.Email,
 		Age:      input.Age,
 		Gender:   input.Gender,
+		FcmToken: input.FcmToken,
 	}
 
-	user, err := service.UserRepository.FindOrCreateByEmail(&requestCreateUser)
-	if err != nil {
-		return types.ResponseToken{}, err
-	}
+	user, _ := service.UserRepository.FindOrCreateByEmail(&requestCreateUser)
 
-	token, err := service.generateToken(user.ID)
-	if err != nil {
-		return types.ResponseToken{}, err
-	}
+	user.FcmToken = input.FcmToken
+	updatedUser, _ := service.UserRepository.Update(user)
+
+	token, _ := service.generateToken(updatedUser.ID)
 
 	return types.ResponseToken{Token: token}, nil
+}
+
+func (service *UserService) UpdateFcmToken(c *gin.Context, input types.RequestUpdateFcmToken) error {
+	user, err := service.UserUtil.FindCurrentUser(c)
+	if err != nil {
+		return err
+	}
+
+	user.FcmToken = input.FcmToken
+	_, updateErr := service.UserRepository.Update(user)
+	if updateErr != nil {
+		return updateErr
+	}
+
+	return nil
 }
 
 func (service *UserService) GetUserInfo(c *gin.Context) (types.ResponseUser, error) {

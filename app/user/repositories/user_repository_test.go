@@ -42,13 +42,14 @@ func TestUserRepository_Create(t *testing.T) {
 		Email:    "test@gmail.com",
 		Age:      20,
 		Gender:   "male",
+		FcmToken: "test_token",
 		Deleted:  gorm.DeletedAt{},
 	}
 
 	// Set up expectations for the mock DB to return the sample user
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO `users`").
-		WithArgs(user.Name, user.Nickname, user.Email, user.Age, user.Gender, user.Deleted).
+		WithArgs(user.Name, user.Nickname, user.Email, user.Age, user.Gender, user.FcmToken, user.Deleted).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -68,6 +69,7 @@ func TestUserRepository_Create(t *testing.T) {
 	assert.Equal(t, user.Email, createdUser.Email)
 	assert.Equal(t, user.Age, createdUser.Age)
 	assert.Equal(t, user.Gender, createdUser.Gender)
+	assert.Equal(t, user.FcmToken, createdUser.FcmToken)
 }
 
 func TestUserRepository_FindByID(t *testing.T) {
@@ -98,13 +100,14 @@ func TestUserRepository_FindByID(t *testing.T) {
 		Email:    "test@gmail.com",
 		Age:      20,
 		Gender:   "male",
+		FcmToken: "test_token",
 		Deleted:  gorm.DeletedAt{},
 	}
 
 	// Set up expectations for the mock DB to return the sample user
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO `users`").
-		WithArgs(user.Name, user.Nickname, user.Email, user.Age, user.Gender, user.Deleted).
+		WithArgs(user.Name, user.Nickname, user.Email, user.Age, user.Gender, user.FcmToken, user.Deleted).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -117,8 +120,8 @@ func TestUserRepository_FindByID(t *testing.T) {
 	// Set up expectations for the mock DB to return the user by ID
 	mock.ExpectQuery("SELECT \\* FROM `users` WHERE id = \\? AND `users`.`deleted` IS NULL ORDER BY `users`.`id` LIMIT 1").
 		WithArgs(sqlmock.AnyArg()).
-		WillReturnRows(sqlmock.NewRows([]string{"ID", "Name", "Nickname", "Email", "Age", "Gender", "Deleted"}).
-			AddRow(createdUser.ID, createdUser.Name, createdUser.Nickname, createdUser.Email, createdUser.Age, createdUser.Gender, createdUser.Deleted.Time))
+		WillReturnRows(sqlmock.NewRows([]string{"ID", "Name", "Nickname", "Email", "Age", "Gender", "FcmToken", "Deleted"}).
+			AddRow(createdUser.ID, createdUser.Name, createdUser.Nickname, createdUser.Email, createdUser.Age, createdUser.Gender, createdUser.FcmToken, createdUser.Deleted.Time))
 
 	// Find the user by ID
 	foundUser, err := userRepository.FindByID(strconv.Itoa(int(createdUser.ID)))
@@ -137,6 +140,7 @@ func TestUserRepository_FindByID(t *testing.T) {
 	assert.Equal(t, user.Email, foundUser.Email)
 	assert.Equal(t, user.Age, foundUser.Age)
 	assert.Equal(t, user.Gender, foundUser.Gender)
+	assert.Equal(t, user.FcmToken, foundUser.FcmToken)
 }
 
 func TestUserRepository_FindOrCreateByEmail_First_Login(t *testing.T) {
@@ -167,19 +171,20 @@ func TestUserRepository_FindOrCreateByEmail_First_Login(t *testing.T) {
 		Email:    "test@gmail.com",
 		Age:      20,
 		Gender:   "male",
+		FcmToken: "test_token",
 		Deleted:  gorm.DeletedAt{},
 	}
 
 	// Set up expectations for the mock DB to create the user
 	mock.ExpectQuery("SELECT \\* FROM `users` WHERE `users`.`email` = \\? AND `users`.`deleted` IS NULL ORDER BY `users`.`id` LIMIT 1").
 		WithArgs(user.Email).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "nickname", "email", "age", "gender", "deleted"}))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "nickname", "email", "age", "gender", "fcm_token", "deleted"}))
 
 	// Set up expectations for the mock DB to create the user
 	mock.ExpectBegin()
 
 	mock.ExpectExec("INSERT INTO `users`").
-		WithArgs(user.Name, user.Nickname, user.Email, user.Age, user.Gender, user.Deleted).
+		WithArgs(user.Name, user.Nickname, user.Email, user.Age, user.Gender, user.FcmToken, user.Deleted).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	mock.ExpectCommit()
@@ -199,6 +204,7 @@ func TestUserRepository_FindOrCreateByEmail_First_Login(t *testing.T) {
 	assert.Equal(t, user.Email, createdUser.Email)
 	assert.Equal(t, user.Age, createdUser.Age)
 	assert.Equal(t, user.Gender, createdUser.Gender)
+	assert.Equal(t, user.FcmToken, createdUser.FcmToken)
 }
 
 func TestUserRepository_FindByEmail(t *testing.T) {
@@ -230,13 +236,14 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 		Email:    email,
 		Age:      20,
 		Gender:   "male",
+		FcmToken: "test_token",
 		Deleted:  gorm.DeletedAt{},
 	}
 
 	// Set up expectations for the mock DB to find the user by email
 	mock.ExpectQuery("SELECT \\* FROM `users` WHERE email = \\?").WithArgs(email).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "nickname", "email", "age", "gender", "deleted"}).
-			AddRow(expectedUser.ID, expectedUser.Name, expectedUser.Nickname, expectedUser.Email, expectedUser.Age, expectedUser.Gender, expectedUser.Deleted))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "nickname", "email", "age", "gender", "fcm_token", "deleted"}).
+			AddRow(expectedUser.ID, expectedUser.Name, expectedUser.Nickname, expectedUser.Email, expectedUser.Age, expectedUser.Gender, expectedUser.FcmToken, expectedUser.Deleted))
 
 	// Call the method under test
 	resultUser, err := userRepository.FindByEmail(email)
@@ -254,6 +261,7 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 	assert.Equal(t, expectedUser.Email, resultUser.Email)
 	assert.Equal(t, expectedUser.Age, resultUser.Age)
 	assert.Equal(t, expectedUser.Gender, resultUser.Gender)
+	assert.Equal(t, expectedUser.FcmToken, resultUser.FcmToken)
 }
 
 func TestUserRepository_Update(t *testing.T) {
@@ -285,13 +293,14 @@ func TestUserRepository_Update(t *testing.T) {
 		Email:    "test@gmail.com",
 		Age:      20,
 		Gender:   "male",
+		FcmToken: "test_token",
 		Deleted:  gorm.DeletedAt{},
 	}
 
 	// Set up expectations for the mock DB to update the user within a transaction
 	mock.ExpectBegin()
 	mock.ExpectExec("UPDATE `users`").
-		WithArgs(user.Name, user.Nickname, user.Email, user.Age, user.Gender, user.Deleted, user.ID).
+		WithArgs(user.Name, user.Nickname, user.Email, user.Age, user.Gender, user.FcmToken, user.Deleted, user.ID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -341,6 +350,7 @@ func TestUserRepository_Delete(t *testing.T) {
 		Email:    "test@gmail.com",
 		Age:      20,
 		Gender:   "male",
+		FcmToken: "test_token",
 		Deleted:  gorm.DeletedAt{Time: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)},
 	}
 
