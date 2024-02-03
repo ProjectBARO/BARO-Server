@@ -126,6 +126,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/analysis/rank": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "로그인한 사용자의 자세 추정 결과를 통해 해당 사용자가 상위 몇 %인지 조회합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "내가 상위 몇 %인지 조회 (나이대 및 성별에 따른)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/global.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/global.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/analysis/summary": {
             "get": {
                 "security": [
