@@ -8,14 +8,15 @@ message User {
     uint64 id = 1;
     string name = 2;
     string nickname = 3;
-    string email = 4;
-    int32 age = 5;
-    string gender = 6;
+    string fcm_token = 4;
+    string email = 5;
+    int32 age = 6;
+    string gender = 7;
 }
 
 message RequestCreateUser {
     string name = 1;
-    string nickname = 2; // Optional
+    string fcm_token = 2; // Optional
     string email = 3;
     int32 age = 4; // Optional
     string gender = 5; // Optional
@@ -40,11 +41,20 @@ message RequestUpdateUser {
     string gender = 3; // Optional
 }
 
+message RequestUpdateFcmToken {
+    string fcm_token = 1;
+}
+
+message ResponseUpdateFcmToken {
+    string message = 1;
+}
+
 service UserService {
     rpc Login(RequestCreateUser) returns (ResponseToken) {}
     rpc GetUserInfo(Empty) returns (ResponseUser) {}
     rpc UpdateUserInfo(RequestUpdateUser) returns (ResponseUser) {}
     rpc DeleteUser(Empty) returns (Empty) {}
+    rpc UpdateFcmToken(RequestUpdateFcmToken) returns (ResponseUpdateFcmToken) {}
 }
 
 message Empty {}
