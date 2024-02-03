@@ -39,13 +39,19 @@ func NewReportService(reportRepository repositories.ReportRepositoryInterface, u
 	}
 }
 
+var REQUEST_URL string
+var client *http.Client
+
+func init() {
+	REQUEST_URL = os.Getenv("AI_SERVER_API_URL")
+	client = &http.Client{}
+}
+
 func (service *ReportService) Analysis(c *gin.Context, input types.RequestAnalysis) (string, error) {
 	user, err := service.UserUtil.FindCurrentUser(c)
 	if err != nil {
 		return "Not Found User", err
 	}
-
-	REQUEST_URL := os.Getenv("AI_SERVER_API_URL")
 
 	u, _ := url.Parse(REQUEST_URL)
 
@@ -55,7 +61,16 @@ func (service *ReportService) Analysis(c *gin.Context, input types.RequestAnalys
 
 	message := "Video submitted successfully"
 
-	go Predict(*service, u.String(), *user, input)
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- Predict(*service, u.String(), *user, input)
+	}()
+
+	defer func() {
+		if err := <-errCh; err != nil {
+			fmt.Println(err, " [", user.ID, ", ", input.VideoURL, "]")
+		}
+	}()
 
 	return message, nil
 }
@@ -99,8 +114,6 @@ func HandleRequest(url string) (types.ResponseAnalysis, error) {
 	if err != nil {
 		return types.ResponseAnalysis{}, err
 	}
-
-	client := &http.Client{}
 
 	response, err := client.Do(req)
 	if err != nil {

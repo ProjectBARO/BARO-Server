@@ -27,7 +27,8 @@ func NewUserPbApp(userRepository repositories.UserRepositoryInterface, userUtil 
 func (app *UserPbApp) Login(c context.Context, req *userpb.RequestCreateUser) (*userpb.ResponseToken, error) {
 	user := models.User{
 		Name:     req.Name,
-		Nickname: req.Nickname,
+		Nickname: req.Name,
+		FcmToken: req.FcmToken,
 		Email:    req.Email,
 		Age:      int(req.Age),
 		Gender:   req.Gender,
@@ -62,6 +63,24 @@ func (app *UserPbApp) GetUserInfo(c context.Context, req *userpb.Empty) (*userpb
 		Age:      int32(user.Age),
 		Gender:   user.Gender,
 	}, nil
+}
+
+func (app *UserPbApp) UpdateFcmToken(c context.Context, req *userpb.RequestUpdateFcmToken) (*userpb.ResponseUpdateFcmToken, error) {
+	userID := c.Value(auth.UserIDKey).(string)
+
+	user, err := app.UserRepository.FindByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	user.FcmToken = req.FcmToken
+
+	_, err = app.UserRepository.Update(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &userpb.ResponseUpdateFcmToken{Message: "Fcm token updated successfully"}, nil
 }
 
 func (app *UserPbApp) UpdateUserInfo(c context.Context, req *userpb.RequestUpdateUser) (*userpb.ResponseUser, error) {
