@@ -51,6 +51,11 @@ func (m *MockReportRepository) FindAll() ([]models.Report, error) {
 	return args.Get(0).([]models.Report), args.Error(1)
 }
 
+func (m *MockReportRepository) FindRankAtAgeAndGender(user *usermodel.User, start, end time.Time) (types.ResponseRank, error) {
+	args := m.Called(user, start, end)
+	return args.Get(0).(types.ResponseRank), args.Error(1)
+}
+
 type MockUserUtil struct {
 	mock.Mock
 }
@@ -91,6 +96,7 @@ func TestAnalysis(t *testing.T) {
 
 	// Set up expectations for the mock repository and util
 	mockUserUtil.On("FindCurrentUser", mock.Anything).Return(&user, nil)
+	mockReportRepository.On("Save", mock.Anything).Return(&models.Report{}, nil)
 
 	// Create a test context
 	c, _ := gin.CreateTestContext(nil)
@@ -759,6 +765,80 @@ func TestFindAll_NoReport(t *testing.T) {
 	responseReports, err := reportService.FindAll()
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(responseReports))
+
+	// Assert that the expectations were met
+	mockReportRepository.AssertExpectations(t)
+	mockUserUtil.AssertExpectations(t)
+}
+
+func TestFindRankAtAgeAndGender(t *testing.T) {
+	// Mock UserRepository, UserUtil
+	mockReportRepository := new(MockReportRepository)
+	mockUserUtil := new(MockUserUtil)
+
+	// Create ReportService
+	reportService := services.NewReportService(mockReportRepository, mockUserUtil)
+
+	// Set up sample user for the test
+	user := usermodel.User{
+		ID:       1,
+		Name:     "test",
+		Nickname: "test",
+		Email:    "test@gmail.com",
+		Age:      20,
+		Gender:   "male",
+	}
+
+	// Set up sample rank for the test
+	rank := types.ResponseRank{
+		UserID:       1,
+		Nickname:     "test",
+		Age:          20,
+		Gender:       "male",
+		NormalRatio:  90.000,
+		AverageScore: 90.000,
+	}
+
+	// Set up expectations for the mock repository and util
+	mockUserUtil.On("FindCurrentUser", mock.Anything).Return(&user, nil)
+	mockReportRepository.On("FindRankAtAgeAndGender", mock.Anything, mock.Anything, mock.Anything).Return(rank, nil)
+
+	// Create a test context
+	c, _ := gin.CreateTestContext(nil)
+
+	// Call the service
+	responseRank, err := reportService.FindRankAtAgeAndGender(c)
+	assert.NoError(t, err)
+
+	// Assert that the expectations were met
+	mockReportRepository.AssertExpectations(t)
+
+	// Check the results
+	assert.Equal(t, rank.UserID, responseRank.UserID)
+	assert.Equal(t, rank.Nickname, responseRank.Nickname)
+	assert.Equal(t, rank.Age, responseRank.Age)
+	assert.Equal(t, rank.Gender, responseRank.Gender)
+	assert.Equal(t, rank.NormalRatio, responseRank.NormalRatio)
+	assert.Equal(t, rank.AverageScore, responseRank.AverageScore)
+}
+
+func TestFindRankAtAgeAndGender_NoUser(t *testing.T) {
+	// Mock UserRepository, UserUtil
+	mockReportRepository := new(MockReportRepository)
+	mockUserUtil := new(MockUserUtil)
+
+	// Create ReportService
+	reportService := services.NewReportService(mockReportRepository, mockUserUtil)
+
+	// Set up expectations for the mock repository and util
+	mockUserUtil.On("FindCurrentUser", mock.Anything).Return((*usermodel.User)(nil), errors.New("record not found"))
+
+	// Create a test context
+	c, _ := gin.CreateTestContext(nil)
+
+	// Call the service
+	_, err := reportService.FindRankAtAgeAndGender(c)
+	assert.Error(t, err)
 
 	// Assert that the expectations were met
 	mockReportRepository.AssertExpectations(t)
