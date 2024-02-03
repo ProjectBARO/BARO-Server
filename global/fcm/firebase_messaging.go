@@ -3,7 +3,6 @@ package fcm
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	firebase "firebase.google.com/go"
@@ -34,7 +33,7 @@ func SendPushNotification(fcmToken string, title string, body string) error {
 
 	client, err := app.Messaging(ctx)
 	if err != nil {
-		log.Fatalf("error getting Messaging client: %v\n", err)
+		return err
 	}
 
 	message := &messaging.Message{

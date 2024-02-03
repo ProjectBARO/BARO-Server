@@ -10,7 +10,6 @@ import (
 	"gdsc/baro/global/fcm"
 	"gdsc/baro/global/utils"
 	"io"
-	"os"
 	"time"
 
 	"net/http"
@@ -25,6 +24,7 @@ type ReportServiceInterface interface {
 	FindById(c *gin.Context, id uint) (types.ResponseReport, error)
 	FindReportSummaryByMonth(c *gin.Context, yearAndMonth string) ([]types.ResponseReportSummary, error)
 	FindAll() ([]types.ResponseReport, error)
+	FindRankAtAgeAndGender(c *gin.Context) (types.ResponseRank, error)
 }
 
 type ReportService struct {
@@ -43,7 +43,8 @@ var REQUEST_URL string
 var client *http.Client
 
 func init() {
-	REQUEST_URL = os.Getenv("AI_SERVER_API_URL")
+	// REQUEST_URL = os.Getenv("AI_SERVER_API_URL")
+	REQUEST_URL = "http://baroddong.duckdns.org/predict"
 	client = &http.Client{}
 }
 
@@ -348,4 +349,27 @@ func (service *ReportService) FindAll() ([]types.ResponseReport, error) {
 	}
 
 	return responseReports, nil
+}
+
+func (service *ReportService) FindRankAtAgeAndGender(c *gin.Context) (types.ResponseRank, error) {
+	user, err := service.UserUtil.FindCurrentUser(c)
+	if err != nil {
+		return types.ResponseRank{}, err
+	}
+
+	rank, err := service.ReportRepository.FindRankAtAgeAndGender(user, time.Now().AddDate(0, 0, -30), time.Now())
+	if err != nil {
+		return types.ResponseRank{}, err
+	}
+
+	responseRank := types.ResponseRank{
+		UserID:       rank.UserID,
+		Nickname:     user.Nickname,
+		Age:          rank.Age,
+		Gender:       rank.Gender,
+		NormalRatio:  rank.NormalRatio,
+		AverageScore: rank.AverageScore,
+	}
+
+	return responseRank, nil
 }

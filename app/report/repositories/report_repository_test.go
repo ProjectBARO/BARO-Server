@@ -3,6 +3,7 @@ package repositories_test
 import (
 	"gdsc/baro/app/report/models"
 	"gdsc/baro/app/report/repositories"
+	usermodel "gdsc/baro/app/user/models"
 	"testing"
 	"time"
 
@@ -589,6 +590,249 @@ func TestReportRepository_FindAll_Error(t *testing.T) {
 	_, err = reportRepository.FindAll()
 	if err == nil {
 		t.Fatalf("Error finding report: %v", err)
+	}
+
+	// Check that the expectations were met
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestReportRepository_FindRankAtAgeAndGender(t *testing.T) {
+	// Create mock DB
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock DB: %v", err)
+	}
+
+	// Set up expectations for the mock DB (ex: SELECT VERSION())
+	mock.ExpectQuery("SELECT VERSION()").
+		WillReturnRows(sqlmock.NewRows([]string{"VERSION"}).
+			AddRow("8.0.0"))
+
+	// Create gorm.DB
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{Conn: db}), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("Error creating gorm.DB: %v", err)
+	}
+
+	// Create ReportRepository
+	reportRepository := repositories.NewReportRepository(gormDB)
+
+	// Create sample user for the test
+	user := usermodel.User{
+		ID:       1,
+		Name:     "test",
+		Nickname: "test",
+		Email:    "test@gmail.com",
+		Age:      20,
+		Gender:   "male",
+	}
+
+	start := time.Now().AddDate(0, 0, -30)
+	end := time.Now()
+
+	ageGroup := 20
+	userAvgScore := 80.0
+
+	// Set up expectations for the mock DB to return the sample report
+	mock.ExpectQuery("SELECT avg\\(score\\) FROM `reports` inner join users on users.id = reports.user_id WHERE reports.user_id = \\? AND \\(reports.created_at BETWEEN \\? AND \\?\\)").
+		WithArgs(user.ID, start, end).
+		WillReturnRows(sqlmock.NewRows([]string{"avg"}).
+			AddRow("80.0"))
+
+	// Set up expectations for the mock DB to return total users
+	mock.ExpectQuery("SELECT count\\(\\*\\) FROM `users` WHERE \\(age >= \\? AND age < \\?\\) AND gender = \\?").
+		WithArgs(ageGroup, ageGroup+10, user.Gender).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).
+			AddRow("100"))
+
+	// Set up expectations for the mock DB to return rank
+	mock.ExpectQuery("SELECT COUNT\\(\\*\\) as rank_count FROM \\(\\s*SELECT reports.user_id, AVG\\(score\\) as average_score FROM reports INNER JOIN users\\s+on\\s+users.id = reports.user_id WHERE users.age >= \\? AND users.age < \\? AND users.gender = \\? AND reports.created_at BETWEEN \\? AND \\? GROUP BY reports.user_id\\s*\\) as subquery WHERE average_score > \\?").
+		WithArgs(ageGroup, ageGroup+10, user.Gender, start, end, userAvgScore).
+		WillReturnRows(sqlmock.NewRows([]string{"rank_count"}).
+			AddRow("20"))
+
+	// Call the method under test
+	responseRank, err := reportRepository.FindRankAtAgeAndGender(&user, start, end)
+	if err != nil {
+		t.Fatalf("Error finding rank: %v", err)
+	}
+
+	// Check that the expectations were met
+	assert.NoError(t, mock.ExpectationsWereMet())
+
+	// Check the result
+	assert.Equal(t, user.ID, responseRank.UserID)
+	assert.Equal(t, user.Nickname, responseRank.Nickname)
+	assert.Equal(t, user.Age, responseRank.Age)
+	assert.Equal(t, user.Gender, responseRank.Gender)
+	assert.Equal(t, 80.0, responseRank.NormalRatio)
+	assert.Equal(t, 80.0, responseRank.AverageScore)
+}
+
+func TestReportRepository_FindRankAtAgeAndGender_Error(t *testing.T) {
+	// Create mock DB
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock DB: %v", err)
+	}
+
+	// Set up expectations for the mock DB (ex: SELECT VERSION())
+	mock.ExpectQuery("SELECT VERSION()").
+		WillReturnRows(sqlmock.NewRows([]string{"VERSION"}).
+			AddRow("8.0.0"))
+
+	// Create gorm.DB
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{Conn: db}), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("Error creating gorm.DB: %v", err)
+	}
+
+	// Create ReportRepository
+	reportRepository := repositories.NewReportRepository(gormDB)
+
+	// Create sample user for the test
+	user := usermodel.User{
+		ID:       1,
+		Name:     "test",
+		Nickname: "test",
+		Email:    "test@gmail.com",
+		Age:      20,
+		Gender:   "male",
+	}
+
+	start := time.Now().AddDate(0, 0, -30)
+	end := time.Now()
+
+	// Set up expectations for the mock DB to return the sample report
+	mock.ExpectQuery("SELECT avg\\(score\\) FROM `reports` inner join users on users.id = reports.user_id WHERE reports.user_id = \\? AND \\(reports.created_at BETWEEN \\? AND \\?\\)").
+		WithArgs(user.ID, start, end).
+		WillReturnError(err)
+
+	// Call the method under test
+	_, err = reportRepository.FindRankAtAgeAndGender(&user, start, end)
+	if err == nil {
+		t.Fatalf("Error finding rank: %v", err)
+	}
+
+	// Check that the expectations were met
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestReportRepository_FindRankAtAgeAndGender_Error2(t *testing.T) {
+	// Create mock DB
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock DB: %v", err)
+	}
+
+	// Set up expectations for the mock DB (ex: SELECT VERSION())
+	mock.ExpectQuery("SELECT VERSION()").
+		WillReturnRows(sqlmock.NewRows([]string{"VERSION"}).
+			AddRow("8.0.0"))
+
+	// Create gorm.DB
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{Conn: db}), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("Error creating gorm.DB: %v", err)
+	}
+
+	// Create ReportRepository
+	reportRepository := repositories.NewReportRepository(gormDB)
+
+	// Create sample user for the test
+	user := usermodel.User{
+		ID:       1,
+		Name:     "test",
+		Nickname: "test",
+		Email:    "test@gmail.com",
+		Age:      20,
+		Gender:   "male",
+	}
+
+	start := time.Now().AddDate(0, 0, -30)
+	end := time.Now()
+
+	ageGroup := 20
+
+	// Set up expectations for the mock DB to return the sample report
+	mock.ExpectQuery("SELECT avg\\(score\\) FROM `reports` inner join users on users.id = reports.user_id WHERE reports.user_id = \\? AND \\(reports.created_at BETWEEN \\? AND \\?\\)").
+		WithArgs(user.ID, start, end).
+		WillReturnRows(sqlmock.NewRows([]string{"avg"}).
+			AddRow("80.0"))
+
+	// Set up expectations for the mock DB to return total users
+	mock.ExpectQuery("SELECT count\\(\\*\\) FROM `users` WHERE \\(age >= \\? AND age < \\?\\) AND gender = \\?").
+		WithArgs(ageGroup, ageGroup+10, user.Gender).
+		WillReturnError(err)
+
+	// Call the method under test
+	_, err = reportRepository.FindRankAtAgeAndGender(&user, start, end)
+	if err == nil {
+		t.Fatalf("Error finding rank: %v", err)
+	}
+
+	// Check that the expectations were met
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestReportRepository_FindRankAtAgeAndGender_Error3(t *testing.T) {
+	// Create mock DB
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock DB: %v", err)
+	}
+
+	// Set up expectations for the mock DB (ex: SELECT VERSION())
+	mock.ExpectQuery("SELECT VERSION()").
+		WillReturnRows(sqlmock.NewRows([]string{"VERSION"}).
+			AddRow("8.0.0"))
+
+	// Create gorm.DB
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{Conn: db}), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("Error creating gorm.DB: %v", err)
+	}
+
+	// Create ReportRepository
+	reportRepository := repositories.NewReportRepository(gormDB)
+
+	// Create sample user for the test
+	user := usermodel.User{
+		ID:       1,
+		Name:     "test",
+		Nickname: "test",
+		Email:    "test@gmail.com",
+		Age:      20,
+		Gender:   "male",
+	}
+
+	start := time.Now().AddDate(0, 0, -30)
+	end := time.Now()
+
+	ageGroup := 20
+	userAvgScore := 80.0
+
+	// Set up expectations for the mock DB to return the sample report
+	mock.ExpectQuery("SELECT avg\\(score\\) FROM `reports` inner join users on users.id = reports.user_id WHERE reports.user_id = \\? AND \\(reports.created_at BETWEEN \\? AND \\?\\)").
+		WithArgs(user.ID, start, end).
+		WillReturnRows(sqlmock.NewRows([]string{"avg"}).
+			AddRow("80.0"))
+
+	// Set up expectations for the mock DB to return total users
+	mock.ExpectQuery("SELECT count\\(\\*\\) FROM `users` WHERE \\(age >= \\? AND age < \\?\\) AND gender = \\?").
+		WithArgs(ageGroup, ageGroup+10, user.Gender).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).
+			AddRow("100"))
+
+	// Set up expectations for the mock DB to return rank
+	mock.ExpectQuery("SELECT COUNT\\(\\*\\) as rank_count FROM \\(\\s*SELECT reports.user_id, AVG\\(score\\) as average_score FROM reports INNER JOIN users\\s+on\\s+users.id = reports.user_id WHERE users.age >= \\? AND users.age < \\? AND users.gender = \\? AND reports.created_at BETWEEN \\? AND \\? GROUP BY reports.user_id\\s*\\) as subquery WHERE average_score > \\?").
+		WithArgs(ageGroup, ageGroup+10, user.Gender, start, end, userAvgScore).
+		WillReturnError(err)
+
+	// Call the method under test
+	_, err = reportRepository.FindRankAtAgeAndGender(&user, start, end)
+	if err == nil {
+		t.Fatalf("Error finding rank: %v", err)
 	}
 
 	// Check that the expectations were met

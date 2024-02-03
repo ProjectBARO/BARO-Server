@@ -108,6 +108,7 @@ func (app *App) InitRouter() {
 		secureAPI.GET("/analysis/:id", func(c *gin.Context) { app.ReportCtrl.GetAnalysisById(c) })
 		secureAPI.GET("/analysis/summary", func(c *gin.Context) { app.ReportCtrl.GetAnalysisSummary(c) })
 		secureAPI.GET("/analysis/all", func(c *gin.Context) { app.ReportCtrl.GetAnalyzes(c) })
+		secureAPI.GET("/analysis/rank", func(c *gin.Context) { app.ReportCtrl.GetAnalysisRankAtAgeAndGender(c) })
 	}
 }
 

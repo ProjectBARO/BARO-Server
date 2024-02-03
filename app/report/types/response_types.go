@@ -30,3 +30,12 @@ type ResponseReport struct {
 	StatusFrequencies string    `json:"status_frequencies"`
 	CreatedAt         time.Time `json:"created_at"`
 }
+
+type ResponseRank struct {
+	UserID       uint    `json:"user_id"`
+	Nickname     string  `json:"nickname"`
+	Gender       string  `json:"gender"`
+	Age          int     `json:"age"`
+	NormalRatio  float64 `json:"normal_ratio"`
+	AverageScore float64 `json:"average_score"`
+}
