@@ -2,6 +2,9 @@ package repositories
 
 import (
 	"gdsc/baro/app/report/models"
+	"gdsc/baro/app/report/types"
+	users "gdsc/baro/app/user/models"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -12,6 +15,7 @@ type ReportRepositoryInterface interface {
 	FindById(id uint) (models.Report, error)
 	FindByYearAndMonth(userID uint, month string) ([]models.Report, error)
 	FindAll() ([]models.Report, error)
+	FindRankAtAgeAndGender(user *users.User, start, end time.Time) (types.ResponseRank, error)
 }
 
 type ReportRepository struct {
@@ -53,4 +57,65 @@ func (repo *ReportRepository) FindAll() ([]models.Report, error) {
 	var reports []models.Report
 	result := repo.DB.Find(&reports)
 	return reports, result.Error
+}
+
+func (repo *ReportRepository) FindRankAtAgeAndGender(user *users.User, start, end time.Time) (types.ResponseRank, error) {
+	var userAvgScore float64
+	var totalUsers, rank int64
+	ageGroup := user.Age / 10 * 10
+
+	// calculate average score for the user
+	err := repo.DB.Table("reports").
+		Select("avg(score)").
+		Joins("inner join users on users.id = reports.user_id").
+		Where("reports.user_id = ?", user.ID).
+		Where("reports.created_at BETWEEN ? AND ?", start, end).
+		Scan(&userAvgScore).Error
+
+	if err != nil {
+		return types.ResponseRank{}, err
+	}
+
+	// calculate total users in the same age group and gender
+	err = repo.DB.Table("users").
+		Where("age >= ? AND age < ?", ageGroup, ageGroup+10).
+		Where("gender = ?", user.Gender).
+		Count(&totalUsers).Error
+
+	if err != nil {
+		return types.ResponseRank{}, err
+	}
+
+	// calculate rank
+	sql := `
+	SELECT COUNT(*) as rank_count
+	FROM (
+		SELECT reports.user_id, AVG(score) as average_score
+		FROM reports
+		INNER JOIN users on users.id = reports.user_id
+		WHERE users.age >= ? AND users.age < ?
+		AND users.gender = ?
+		AND reports.created_at BETWEEN ? AND ?
+		GROUP BY reports.user_id
+	) as subquery
+	WHERE average_score > ?
+	`
+
+	err = repo.DB.Raw(sql, ageGroup, ageGroup+10, user.Gender, start, end, userAvgScore).Scan(&rank).Error
+	if err != nil {
+		return types.ResponseRank{}, err
+	}
+
+	rank = totalUsers - rank
+
+	normalRatio := float64(rank) / float64(totalUsers) * 100
+
+	return types.ResponseRank{
+		UserID:       user.ID,
+		Nickname:     user.Nickname,
+		Age:          user.Age,
+		Gender:       user.Gender,
+		NormalRatio:  normalRatio,
+		AverageScore: userAvgScore,
+	}, nil
 }

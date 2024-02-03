@@ -157,6 +157,32 @@ func (controller *ReportController) GetAnalysisSummary(c *gin.Context) {
 }
 
 // @Tags Reports
+// @Summary 내가 상위 몇 %인지 조회 (나이대 및 성별에 따른)
+// @Description 로그인한 사용자의 자세 추정 결과를 통해 해당 사용자가 상위 몇 %인지 조회합니다.
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} global.Response
+// @Failure 400 {object} global.Response
+// @Security Bearer
+// @Router /analysis/rank [get]
+func (controller *ReportController) GetAnalysisRankAtAgeAndGender(c *gin.Context) {
+	response, err := controller.ReportService.FindRankAtAgeAndGender(c)
+	if err != nil {
+		c.JSON(400, global.Response{
+			Status:  400,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, global.Response{
+		Status:  200,
+		Message: "success",
+		Data:    response,
+	})
+}
+
+// @Tags Reports
 // @Summary 자세 추정 결과 전체 조회 (테스트용)
 // @Description 자세 추정 결과를 조회합니다.
 // @Accept  json
