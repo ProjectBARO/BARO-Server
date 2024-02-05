@@ -665,7 +665,7 @@ func TestReportRepository_FindRankAtAgeAndGender(t *testing.T) {
 	assert.Equal(t, user.Nickname, responseRank.Nickname)
 	assert.Equal(t, user.Age, responseRank.Age)
 	assert.Equal(t, user.Gender, responseRank.Gender)
-	assert.Equal(t, 80.0, responseRank.NormalRatio)
+	assert.Equal(t, "80.00", responseRank.NormalRatio)
 	assert.Equal(t, 80.0, responseRank.AverageScore)
 }
 

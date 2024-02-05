@@ -96,7 +96,6 @@ func TestAnalysis(t *testing.T) {
 
 	// Set up expectations for the mock repository and util
 	mockUserUtil.On("FindCurrentUser", mock.Anything).Return(&user, nil)
-	mockReportRepository.On("Save", mock.Anything).Return(&models.Report{}, nil)
 
 	// Create a test context
 	c, _ := gin.CreateTestContext(nil)
@@ -249,55 +248,55 @@ func TestCalculateScores_AllBad(t *testing.T) {
 	result := services.CalculateScores(testResult, testScores)
 
 	// Assert result
-	assert.Equal(t, "15.00", result)
+	assert.Equal(t, "29.33", result)
 }
 
 func TestCalculateScores_HalfGood(t *testing.T) {
 	// Set up test data
 	testResult := []int{0, 0, 0, 1, 1, 1}
-	testScores := []float64{99.9, 92.9, 92.3, 92.4, 99.5, 92.0}
+	testScores := []float64{99.9, 99.2, 96.5, 95.5, 94.9, 92.0}
 
 	// Execute method under test
 	result := services.CalculateScores(testResult, testScores)
 
 	// Assert result
-	assert.Equal(t, "57.50", result)
+	assert.Equal(t, "56.17", result)
 }
 
 func TestCalculateScores_AllGoodDiffScore(t *testing.T) {
 	// Set up test data
 	testResult := []int{1, 1, 1, 1, 1, 1}
-	testScores := []float64{99.9, 89.9, 79.9, 69.9, 59.9, 49.9}
+	testScores := []float64{99.9, 99.2, 96.5, 95.5, 94.9, 92.0}
 
 	// Execute method under test
 	result := services.CalculateScores(testResult, testScores)
 
 	// Assert result
-	assert.Equal(t, "93.83", result)
+	assert.Equal(t, "92.83", result)
 }
 
 func TestCalculateScores_AllBadSameScore(t *testing.T) {
 	// Set up test data
 	testResult := []int{0, 0, 0, 0, 0, 0}
-	testScores := []float64{99.9, 89.9, 79.9, 69.9, 59.9, 49.9}
+	testScores := []float64{99.9, 99.1, 97.5, 93.9, 92.9, 86.9}
 
 	// Execute method under test
 	result := services.CalculateScores(testResult, testScores)
 
 	// Assert result
-	assert.Equal(t, "24.50", result)
+	assert.Equal(t, "30.67", result)
 }
 
 func TestCalculateScores_AllGood(t *testing.T) {
 	// Set up test data
 	testResult := []int{1, 1, 1, 1, 1, 1}
-	testScores := []float64{99.9, 92.9, 92.3, 92.4, 99.5, 92.0}
+	testScores := []float64{99.9, 92.9, 96.3, 92.4, 99.1, 92.0}
 
 	// Execute method under test
 	result := services.CalculateScores(testResult, testScores)
 
 	// Assert result
-	assert.Equal(t, "100.00", result)
+	assert.Equal(t, "91.50", result)
 }
 
 func TestGenerateMessage(t *testing.T) {
@@ -795,7 +794,7 @@ func TestFindRankAtAgeAndGender(t *testing.T) {
 		Nickname:     "test",
 		Age:          20,
 		Gender:       "male",
-		NormalRatio:  90.000,
+		NormalRatio:  "90.00",
 		AverageScore: 90.000,
 	}
 
