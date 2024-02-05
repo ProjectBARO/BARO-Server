@@ -158,8 +158,13 @@ func TestPredict_InvalidURL(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestHandleRequest(t *testing.T) {
-	assert.True(t, true)
+func TestHandleRequest_Error(t *testing.T) {
+	// Set up invalid URL
+	url := ""
+
+	// Call the service
+	_, err := services.HandleRequest(url)
+	assert.Error(t, err)
 }
 
 func TestParseAnalysis(t *testing.T) {
@@ -435,6 +440,43 @@ func TestFindReportByCurrentUser_NoUser(t *testing.T) {
 
 	// Check the results
 	assert.Equal(t, "record not found", err.Error())
+}
+
+func TestFindReportByCurrentUser_NoUser2(t *testing.T) {
+	// Mock UserRepository, UserUtil
+	mockReportRepository := new(MockReportRepository)
+	mockUserUtil := new(MockUserUtil)
+
+	// Create ReportService
+	reportService := services.NewReportService(mockReportRepository, mockUserUtil)
+
+	// Set up sample user for the test
+	user := usermodel.User{
+		ID:       1,
+		Name:     "test",
+		Nickname: "test",
+		Email:    "test@gmail.com",
+		Age:      20,
+		Gender:   "male",
+	}
+
+	// Set up expectations for the mock repository and util
+	mockUserUtil.On("FindCurrentUser", mock.Anything).Return(&user, nil)
+	mockReportRepository.On("FindByUserID", mock.Anything).Return([]models.Report{}, nil)
+
+	// Create a test context
+	c, _ := gin.CreateTestContext(nil)
+
+	// Call the service
+	responseReports, err := reportService.FindReportByCurrentUser(c)
+	assert.NoError(t, err)
+
+	// Assert that the expectations were met
+	mockReportRepository.AssertExpectations(t)
+	mockUserUtil.AssertExpectations(t)
+
+	// Check the results
+	assert.Equal(t, 0, len(responseReports))
 }
 
 func TestFindReportByCurrentUser_NoReport(t *testing.T) {

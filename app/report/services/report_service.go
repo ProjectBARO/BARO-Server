@@ -360,10 +360,7 @@ func (service *ReportService) FindRankAtAgeAndGender(c *gin.Context) (types.Resp
 		return types.ResponseRank{}, err
 	}
 
-	rank, err := service.ReportRepository.FindRankAtAgeAndGender(user, time.Now().AddDate(0, 0, -30), time.Now())
-	if err != nil {
-		return types.ResponseRank{}, err
-	}
+	rank, _ := service.ReportRepository.FindRankAtAgeAndGender(user, time.Now().AddDate(0, 0, -30), time.Now())
 
 	responseRank := types.ResponseRank{
 		UserID:       rank.UserID,
