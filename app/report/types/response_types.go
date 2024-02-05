@@ -32,10 +32,11 @@ type ResponseReport struct {
 }
 
 type ResponseRank struct {
-	UserID       uint    `json:"user_id"`
-	Nickname     string  `json:"nickname"`
-	Gender       string  `json:"gender"`
-	Age          int     `json:"age"`
-	NormalRatio  string  `json:"normal_ratio"`
-	AverageScore float64 `json:"average_score"`
+	UserID          uint   `json:"user_id"`
+	Nickname        string `json:"nickname"`
+	Gender          string `json:"gender"`
+	Age             int    `json:"age"`
+	NormalRatio     string `json:"normal_ratio"`
+	AverageScore    string `json:"average_score"`
+	AllAverageScore string `json:"all_average_score"`
 }

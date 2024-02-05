@@ -832,12 +832,13 @@ func TestFindRankAtAgeAndGender(t *testing.T) {
 
 	// Set up sample rank for the test
 	rank := types.ResponseRank{
-		UserID:       1,
-		Nickname:     "test",
-		Age:          20,
-		Gender:       "male",
-		NormalRatio:  "90.00",
-		AverageScore: 90.000,
+		UserID:          1,
+		Nickname:        "test",
+		Age:             20,
+		Gender:          "male",
+		NormalRatio:     "90.00",
+		AverageScore:    "90.00",
+		AllAverageScore: "90.00",
 	}
 
 	// Set up expectations for the mock repository and util
