@@ -10,6 +10,7 @@ import (
 	"gdsc/baro/global/fcm"
 	"gdsc/baro/global/utils"
 	"io"
+	"os"
 	"time"
 
 	"net/http"
@@ -43,8 +44,7 @@ var REQUEST_URL string
 var client *http.Client
 
 func init() {
-	// REQUEST_URL = os.Getenv("AI_SERVER_API_URL")
-	REQUEST_URL = "http://baroddong.duckdns.org/predict"
+	REQUEST_URL = os.Getenv("AI_SERVER_API_URL")
 	client = &http.Client{}
 }
 
@@ -193,30 +193,33 @@ func CalculateScores(result []int, scores []float64) string {
 
 	for _, score := range normalCases {
 		switch {
-		case score >= 90:
+		case score >= 99.8:
 			totalScore += 1.0 * caseScore
-		case score >= 80:
-			totalScore += 0.98 * caseScore
-		case score >= 70:
-			totalScore += 0.95 * caseScore
-		default:
+		case score >= 99:
+			totalScore += 0.97 * caseScore
+		case score >= 96:
+			totalScore += 0.94 * caseScore
+		case score >= 93:
 			totalScore += 0.9 * caseScore
+		default:
+			totalScore += 0.86 * caseScore
 		}
 	}
 
 	for _, score := range abnormalCases {
 		switch {
-		case score >= 90:
-			totalScore += 0.15 * caseScore
-		case score >= 80:
-			totalScore += 0.2 * caseScore
-		case score >= 70:
-			totalScore += 0.25 * caseScore
-		case score >= 60:
-			totalScore += 0.27 * caseScore
-		default:
+		case score >= 99.5:
+			totalScore += 0.18 * caseScore
+		case score >= 98:
+			totalScore += 0.23 * caseScore
+		case score >= 95:
 			totalScore += 0.3 * caseScore
+		case score >= 90:
+			totalScore += 0.35 * caseScore
+		default:
+			totalScore += 0.43 * caseScore
 		}
+
 	}
 
 	return fmt.Sprintf("%.2f", totalScore)

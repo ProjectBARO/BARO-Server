@@ -36,6 +36,6 @@ type ResponseRank struct {
 	Nickname     string  `json:"nickname"`
 	Gender       string  `json:"gender"`
 	Age          int     `json:"age"`
-	NormalRatio  float64 `json:"normal_ratio"`
+	NormalRatio  string  `json:"normal_ratio"`
 	AverageScore float64 `json:"average_score"`
 }
