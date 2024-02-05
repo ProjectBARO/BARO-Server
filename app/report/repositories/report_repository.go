@@ -120,9 +120,7 @@ func (repo *ReportRepository) FindRankAtAgeAndGender(user *users.User, start, en
 		return types.ResponseRank{}, err
 	}
 
-	rank = totalUsers - rank
-
-	normalRatio := fmt.Sprintf("%.2f", float64(rank)/float64(totalUsers)*100.00)
+	normalRatio := fmt.Sprintf("%.2f", (float64(rank+1)/float64(totalUsers))*100)
 	averageScore := fmt.Sprintf("%.2f", userAvgScore)
 	allAvgScoreStr := fmt.Sprintf("%.2f", allAvgScore)
 
