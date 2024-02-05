@@ -632,6 +632,7 @@ func TestReportRepository_FindRankAtAgeAndGender(t *testing.T) {
 
 	ageGroup := 20
 	userAvgScore := 80.0
+	allAvgScore := 90.0
 
 	// Set up expectations for the mock DB to return the sample report
 	mock.ExpectQuery("SELECT avg\\(score\\) FROM `reports` inner join users on users.id = reports.user_id WHERE reports.user_id = \\? AND \\(reports.created_at BETWEEN \\? AND \\?\\)").
@@ -644,6 +645,12 @@ func TestReportRepository_FindRankAtAgeAndGender(t *testing.T) {
 		WithArgs(ageGroup, ageGroup+10, user.Gender).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).
 			AddRow("100"))
+
+	// Set up expectations for the mock DB to return average score for all users in the same age group and gender
+	mock.ExpectQuery("SELECT avg\\(score\\) FROM `reports` inner join users on users.id = reports.user_id WHERE \\(users.age >= \\? AND users.age < \\?\\) AND users.gender = \\? AND \\(reports.created_at BETWEEN \\? AND \\?\\)").
+		WithArgs(ageGroup, ageGroup+10, user.Gender, start, end).
+		WillReturnRows(sqlmock.NewRows([]string{"avg"}).
+			AddRow(allAvgScore))
 
 	// Set up expectations for the mock DB to return rank
 	mock.ExpectQuery("SELECT COUNT\\(\\*\\) as rank_count FROM \\(\\s*SELECT reports.user_id, AVG\\(score\\) as average_score FROM reports INNER JOIN users\\s+on\\s+users.id = reports.user_id WHERE users.age >= \\? AND users.age < \\? AND users.gender = \\? AND reports.created_at BETWEEN \\? AND \\? GROUP BY reports.user_id\\s*\\) as subquery WHERE average_score > \\?").
@@ -666,7 +673,8 @@ func TestReportRepository_FindRankAtAgeAndGender(t *testing.T) {
 	assert.Equal(t, user.Age, responseRank.Age)
 	assert.Equal(t, user.Gender, responseRank.Gender)
 	assert.Equal(t, "80.00", responseRank.NormalRatio)
-	assert.Equal(t, 80.0, responseRank.AverageScore)
+	assert.Equal(t, "80.00", responseRank.AverageScore)
+	assert.Equal(t, "90.00", responseRank.AllAverageScore)
 }
 
 func TestReportRepository_FindRankAtAgeAndGender_Error(t *testing.T) {
@@ -810,7 +818,6 @@ func TestReportRepository_FindRankAtAgeAndGender_Error3(t *testing.T) {
 	end := time.Now()
 
 	ageGroup := 20
-	userAvgScore := 80.0
 
 	// Set up expectations for the mock DB to return the sample report
 	mock.ExpectQuery("SELECT avg\\(score\\) FROM `reports` inner join users on users.id = reports.user_id WHERE reports.user_id = \\? AND \\(reports.created_at BETWEEN \\? AND \\?\\)").
@@ -823,6 +830,77 @@ func TestReportRepository_FindRankAtAgeAndGender_Error3(t *testing.T) {
 		WithArgs(ageGroup, ageGroup+10, user.Gender).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).
 			AddRow("100"))
+
+	// Set up expectations for the mock DB to return average score for all users in the same age group and gender
+	mock.ExpectQuery("SELECT avg\\(score\\) FROM `reports` inner join users on users.id = reports.user_id WHERE \\(users.age >= \\? AND users.age < \\?\\) AND users.gender = \\? AND \\(reports.created_at BETWEEN \\? AND \\?\\)").
+		WithArgs(ageGroup, ageGroup+10, user.Gender, start, end).
+		WillReturnError(err)
+
+	// Call the method under test
+	_, err = reportRepository.FindRankAtAgeAndGender(&user, start, end)
+	if err == nil {
+		t.Fatalf("Error finding rank: %v", err)
+	}
+
+	// Check that the expectations were met
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestReportRepository_FindRankAtAgeAndGender_Error4(t *testing.T) {
+	// Create mock DB
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Error creating mock DB: %v", err)
+	}
+
+	// Set up expectations for the mock DB (ex: SELECT VERSION())
+	mock.ExpectQuery("SELECT VERSION()").
+		WillReturnRows(sqlmock.NewRows([]string{"VERSION"}).
+			AddRow("8.0.0"))
+
+	// Create gorm.DB
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{Conn: db}), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("Error creating gorm.DB: %v", err)
+	}
+
+	// Create ReportRepository
+	reportRepository := repositories.NewReportRepository(gormDB)
+
+	// Create sample user for the test
+	user := usermodel.User{
+		ID:       1,
+		Name:     "test",
+		Nickname: "test",
+		Email:    "test@gmail.com",
+		Age:      20,
+		Gender:   "male",
+	}
+
+	start := time.Now().AddDate(0, 0, -30)
+	end := time.Now()
+
+	ageGroup := 20
+	userAvgScore := 80.0
+	allAvgScore := 90.0
+
+	// Set up expectations for the mock DB to return the sample report
+	mock.ExpectQuery("SELECT avg\\(score\\) FROM `reports` inner join users on users.id = reports.user_id WHERE reports.user_id = \\? AND \\(reports.created_at BETWEEN \\? AND \\?\\)").
+		WithArgs(user.ID, start, end).
+		WillReturnRows(sqlmock.NewRows([]string{"avg"}).
+			AddRow("80.0"))
+
+	// Set up expectations for the mock DB to return total users
+	mock.ExpectQuery("SELECT count\\(\\*\\) FROM `users` WHERE \\(age >= \\? AND age < \\?\\) AND gender = \\?").
+		WithArgs(ageGroup, ageGroup+10, user.Gender).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).
+			AddRow("100"))
+
+	// Set up expectations for the mock DB to return average score for all users in the same age group and gender
+	mock.ExpectQuery("SELECT avg\\(score\\) FROM `reports` inner join users on users.id = reports.user_id WHERE \\(users.age >= \\? AND users.age < \\?\\) AND users.gender = \\? AND \\(reports.created_at BETWEEN \\? AND \\?\\)").
+		WithArgs(ageGroup, ageGroup+10, user.Gender, start, end).
+		WillReturnRows(sqlmock.NewRows([]string{"avg"}).
+			AddRow(allAvgScore))
 
 	// Set up expectations for the mock DB to return rank
 	mock.ExpectQuery("SELECT COUNT\\(\\*\\) as rank_count FROM \\(\\s*SELECT reports.user_id, AVG\\(score\\) as average_score FROM reports INNER JOIN users\\s+on\\s+users.id = reports.user_id WHERE users.age >= \\? AND users.age < \\? AND users.gender = \\? AND reports.created_at BETWEEN \\? AND \\? GROUP BY reports.user_id\\s*\\) as subquery WHERE average_score > \\?").
