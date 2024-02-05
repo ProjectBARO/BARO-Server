@@ -363,12 +363,13 @@ func (service *ReportService) FindRankAtAgeAndGender(c *gin.Context) (types.Resp
 	rank, _ := service.ReportRepository.FindRankAtAgeAndGender(user, time.Now().AddDate(0, 0, -30), time.Now())
 
 	responseRank := types.ResponseRank{
-		UserID:       rank.UserID,
-		Nickname:     user.Nickname,
-		Age:          rank.Age,
-		Gender:       rank.Gender,
-		NormalRatio:  rank.NormalRatio,
-		AverageScore: rank.AverageScore,
+		UserID:          rank.UserID,
+		Nickname:        user.Nickname,
+		Age:             rank.Age,
+		Gender:          rank.Gender,
+		NormalRatio:     rank.NormalRatio,
+		AverageScore:    rank.AverageScore,
+		AllAverageScore: rank.AllAverageScore,
 	}
 
 	return responseRank, nil

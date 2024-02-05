@@ -61,7 +61,7 @@ func (repo *ReportRepository) FindAll() ([]models.Report, error) {
 }
 
 func (repo *ReportRepository) FindRankAtAgeAndGender(user *users.User, start, end time.Time) (types.ResponseRank, error) {
-	var userAvgScore float64
+	var userAvgScore, allAvgScore float64
 	var totalUsers, rank int64
 	ageGroup := user.Age / 10 * 10
 
@@ -82,6 +82,19 @@ func (repo *ReportRepository) FindRankAtAgeAndGender(user *users.User, start, en
 		Where("age >= ? AND age < ?", ageGroup, ageGroup+10).
 		Where("gender = ?", user.Gender).
 		Count(&totalUsers).Error
+
+	if err != nil {
+		return types.ResponseRank{}, err
+	}
+
+	// calculate average score for all users in the same age group and gender
+	err = repo.DB.Table("reports").
+		Select("avg(score)").
+		Joins("inner join users on users.id = reports.user_id").
+		Where("users.age >= ? AND users.age < ?", ageGroup, ageGroup+10).
+		Where("users.gender = ?", user.Gender).
+		Where("reports.created_at BETWEEN ? AND ?", start, end).
+		Scan(&allAvgScore).Error
 
 	if err != nil {
 		return types.ResponseRank{}, err
@@ -110,13 +123,16 @@ func (repo *ReportRepository) FindRankAtAgeAndGender(user *users.User, start, en
 	rank = totalUsers - rank
 
 	normalRatio := fmt.Sprintf("%.2f", float64(rank)/float64(totalUsers)*100.00)
+	averageScore := fmt.Sprintf("%.2f", userAvgScore)
+	allAvgScoreStr := fmt.Sprintf("%.2f", allAvgScore)
 
 	return types.ResponseRank{
-		UserID:       user.ID,
-		Nickname:     user.Nickname,
-		Age:          user.Age,
-		Gender:       user.Gender,
-		NormalRatio:  normalRatio,
-		AverageScore: userAvgScore,
+		UserID:          user.ID,
+		Nickname:        user.Nickname,
+		Age:             user.Age,
+		Gender:          user.Gender,
+		NormalRatio:     normalRatio,
+		AverageScore:    averageScore,
+		AllAverageScore: allAvgScoreStr,
 	}, nil
 }
