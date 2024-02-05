@@ -4,6 +4,7 @@ import (
 	"gdsc/baro/app/report/models"
 	"gdsc/baro/app/report/types"
 	users "gdsc/baro/app/user/models"
+	"math"
 	"time"
 
 	"gorm.io/gorm"
@@ -108,7 +109,7 @@ func (repo *ReportRepository) FindRankAtAgeAndGender(user *users.User, start, en
 
 	rank = totalUsers - rank
 
-	normalRatio := float64(rank) / float64(totalUsers) * 100
+	normalRatio := math.Round(float64(rank) / float64(totalUsers) * 100.00)
 
 	return types.ResponseRank{
 		UserID:       user.ID,
