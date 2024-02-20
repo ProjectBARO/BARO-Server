@@ -5,16 +5,21 @@ import (
 	reportRepository "gdsc/baro/app/report/repositories"
 	reportService "gdsc/baro/app/report/services"
 	userController "gdsc/baro/app/user/controllers"
+	userapp "gdsc/baro/app/user/pb"
 	userRepository "gdsc/baro/app/user/repositories"
 	userService "gdsc/baro/app/user/services"
 	videoController "gdsc/baro/app/video/controllers"
+	videoapp "gdsc/baro/app/video/pb"
 	videoRepository "gdsc/baro/app/video/repositories"
 	videoService "gdsc/baro/app/video/services"
+
+	userpb "gdsc/baro/protos/user"
+	videopb "gdsc/baro/protos/video"
+
 	"gdsc/baro/docs"
 	"gdsc/baro/global"
 	"gdsc/baro/global/auth"
 	"gdsc/baro/global/config"
-	pbrouter "gdsc/baro/global/router"
 	"gdsc/baro/global/utils"
 	"log"
 	"net"
@@ -24,6 +29,7 @@ import (
 	"github.com/soheilhy/cmux"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"google.golang.org/grpc"
 )
 
 type App struct {
@@ -46,7 +52,13 @@ func (app *App) InitDocs() {
 }
 
 func (app *App) RunGrpcServer(l net.Listener, userRepository userRepository.UserRepositoryInterface, userUtil utils.UserUtilInterface, videoRepository videoRepository.VideoRepositoryInterface) {
-	grpcServer := pbrouter.NewInitApp(userRepository, userUtil, videoRepository)
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(auth.UnaryAuthInterceptor))
+
+	userPbApp := userapp.NewUserPbApp(userRepository, userUtil)
+	videoPbApp := videoapp.NewVideoPbApp(videoRepository)
+
+	userpb.RegisterUserServiceServer(grpcServer, userPbApp)
+	videopb.RegisterVideoServiceServer(grpcServer, videoPbApp)
 
 	if err := grpcServer.Serve(l); err != nil {
 		log.Fatalf("failed to serve: %v", err)

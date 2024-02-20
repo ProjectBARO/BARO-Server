@@ -21,7 +21,7 @@ func ConnectDatabase() (*gorm.DB, error) {
 	MYSQL_PASSWORD := os.Getenv("MYSQL_PASSWORD")
 	MYSQL_DATABASE := os.Getenv("MYSQL_DATABASE")
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Asia%%2FSeoul",
 		MYSQL_USER, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_PORT, MYSQL_DATABASE)
 
 	database, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
