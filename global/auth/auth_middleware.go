@@ -78,7 +78,7 @@ func UnaryAuthInterceptor(c context.Context, req interface{}, info *grpc.UnarySe
 		return nil, errors.New("missing metadata")
 	}
 
-	authHeader, ok := md["Authorization"]
+	authHeader, ok := md["authorization"]
 	if !ok || len(authHeader) == 0 {
 		return nil, errors.New("authorization header is required")
 	}
