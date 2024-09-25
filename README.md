@@ -35,7 +35,6 @@ Therefore, our team has set out to solve this issue for people who work sitting 
 ## ERD
 <img width="554" alt="image" src="https://github.com/ProjectBARO/.github/assets/107793780/cd8d7f93-4929-4224-b3f6-10baec91feb7">
 
-
 ## Team
 |Yehyeok Bang|Inhyeop Lee|Changhoon Ryu|Shinhee Kim|
 |:---:|:---:|:---:|:---:|
