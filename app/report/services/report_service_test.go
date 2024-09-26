@@ -174,9 +174,19 @@ func TestParseAnalysis(t *testing.T) {
 		HunchedRatio: 10.0,
 		NormalRatio:  90.0,
 		Scores:       []float64{99.9, 92.9, 82.3, 92.4, 69.5},
-		LandmarksInfo: [][]interface{}{
-			{[]float64{0.1, 0.2}, []float64{0.3, 0.4}, 1.0, 45.0},
-			{[]float64{0.5, 0.6}, []float64{0.7, 0.8}, 2.0, 60.0},
+		LandmarksInfo: []types.LandmarkInfo{
+			{
+				LeftShoulder:       types.Landmark{X: 0.1, Y: 0.2},
+				LeftEar:            types.Landmark{X: 0.3, Y: 0.4},
+				VerticalDistanceCM: 1.0,
+				Angle:              45.0,
+			},
+			{
+				LeftShoulder:       types.Landmark{X: 0.5, Y: 0.6},
+				LeftEar:            types.Landmark{X: 0.7, Y: 0.8},
+				VerticalDistanceCM: 2.0,
+				Angle:              60.0,
+			},
 		},
 		StatusFrequencies: map[string]int{"Very Serious": 6},
 	}
@@ -200,9 +210,19 @@ func TestParseAnalysis_NoStatusFrequencies(t *testing.T) {
 		HunchedRatio: 10.0,
 		NormalRatio:  90.0,
 		Scores:       []float64{99.9, 92.9, 82.3, 92.4, 69.5},
-		LandmarksInfo: [][]interface{}{
-			{[]float64{0.1, 0.2}, []float64{0.3, 0.4}, 1.0, 45.0},
-			{[]float64{0.5, 0.6}, []float64{0.7, 0.8}, 2.0, 60.0},
+		LandmarksInfo: []types.LandmarkInfo{
+			{
+				LeftShoulder:       types.Landmark{X: 0.1, Y: 0.2},
+				LeftEar:            types.Landmark{X: 0.3, Y: 0.4},
+				VerticalDistanceCM: 1.0,
+				Angle:              45.0,
+			},
+			{
+				LeftShoulder:       types.Landmark{X: 0.5, Y: 0.6},
+				LeftEar:            types.Landmark{X: 0.7, Y: 0.8},
+				VerticalDistanceCM: 2.0,
+				Angle:              60.0,
+			},
 		},
 	}
 
@@ -225,9 +245,19 @@ func TestParseAnalysis_FullStatusFrequencies(t *testing.T) {
 		HunchedRatio: 10.0,
 		NormalRatio:  90.0,
 		Scores:       []float64{99.9, 92.9, 82.3, 92.4, 69.5},
-		LandmarksInfo: [][]interface{}{
-			{[]float64{0.1, 0.2}, []float64{0.3, 0.4}, 1.0, 45.0},
-			{[]float64{0.5, 0.6}, []float64{0.7, 0.8}, 2.0, 60.0},
+		LandmarksInfo: []types.LandmarkInfo{
+			{
+				LeftShoulder:       types.Landmark{X: 0.1, Y: 0.2},
+				LeftEar:            types.Landmark{X: 0.3, Y: 0.4},
+				VerticalDistanceCM: 1.0,
+				Angle:              45.0,
+			},
+			{
+				LeftShoulder:       types.Landmark{X: 0.5, Y: 0.6},
+				LeftEar:            types.Landmark{X: 0.7, Y: 0.8},
+				VerticalDistanceCM: 2.0,
+				Angle:              60.0,
+			},
 		},
 		StatusFrequencies: map[string]int{"Fine": 1, "Danger": 2, "Serious": 1, "Very Serious": 2},
 	}

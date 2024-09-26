@@ -165,10 +165,8 @@ func ParseAnalysis(response *types.ResponseAnalysis) ([]int, []float64, string, 
 	var distances []float64
 	var angles []float64
 	for i := range response.LandmarksInfo {
-		// response.LandmarksInfo[i][2] = 길이
-		// response.LandmarksInfo[i][3] = 각도
-		distances = append(distances, response.LandmarksInfo[i][2].(float64))
-		angles = append(angles, response.LandmarksInfo[i][3].(float64))
+		distances = append(distances, response.LandmarksInfo[i].VerticalDistanceCM)
+		angles = append(angles, response.LandmarksInfo[i].Angle)
 	}
 
 	return result, scores, fmt.Sprintf("%.3f", nomalRatio), fmt.Sprintf("%v", statusFrequencies), fmt.Sprintf("%.3f", distances), fmt.Sprintf("%.3f", angles)

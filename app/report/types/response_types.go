@@ -2,18 +2,31 @@ package types
 
 import "time"
 
+type Landmark struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
+type LandmarkInfo struct {
+	LeftShoulder       Landmark `json:"left_shoulder"`
+	LeftEar            Landmark `json:"left_ear"`
+	VerticalDistanceCM float64  `json:"vertical_distance_cm"`
+	Angle              float64  `json:"angle"`
+}
+
+// 전체 수정된 구조체
 type ResponseReportSummary struct {
 	ID        uint      `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 type ResponseAnalysis struct {
-	Result            []int           `json:"result"`
-	HunchedRatio      float64         `json:"hunched_ratio"`
-	NormalRatio       float64         `json:"normal_ratio"`
-	Scores            []float64       `json:"scores"`
-	LandmarksInfo     [][]interface{} `json:"landmarks_info"`
-	StatusFrequencies map[string]int  `json:"status_frequencies"`
+	Result            []int          `json:"result"`
+	HunchedRatio      float64        `json:"hunched_ratio"`
+	NormalRatio       float64        `json:"normal_ratio"`
+	Scores            []float64      `json:"scores"`
+	LandmarksInfo     []LandmarkInfo `json:"landmarks_info"`
+	StatusFrequencies map[string]int `json:"status_frequencies"`
 }
 
 type ResponseReport struct {
