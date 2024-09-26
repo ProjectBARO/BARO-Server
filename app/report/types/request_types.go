@@ -15,6 +15,10 @@ type RequestAnalysis struct {
 	Type         string `json:"type" validate:"required"`
 }
 
+type RequestAnalysisToAi struct {
+	VideoURL string `json:"video_url"`
+}
+
 type RequestReportSummary struct {
 	YearAndMonth string `json:"year_and_month" validate:"required"`
 }

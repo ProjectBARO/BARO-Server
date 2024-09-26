@@ -163,7 +163,7 @@ func TestHandleRequest_Error(t *testing.T) {
 	url := ""
 
 	// Call the service
-	_, err := services.HandleRequest(url)
+	_, err := services.HandleRequest(url, url)
 	assert.Error(t, err)
 }
 

@@ -14,7 +14,6 @@ type LandmarkInfo struct {
 	Angle              float64  `json:"angle"`
 }
 
-// 전체 수정된 구조체
 type ResponseReportSummary struct {
 	ID        uint      `json:"id"`
 	CreatedAt time.Time `json:"created_at"`

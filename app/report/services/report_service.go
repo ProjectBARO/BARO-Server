@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"gdsc/baro/app/report/models"
@@ -41,11 +42,9 @@ func NewReportService(reportRepository repositories.ReportRepositoryInterface, u
 }
 
 var REQUEST_URL string
-var client *http.Client
 
 func init() {
 	REQUEST_URL = os.Getenv("AI_SERVER_API_URL")
-	client = &http.Client{}
 }
 
 func (service *ReportService) Analysis(c *gin.Context, input types.RequestAnalysis) (string, error) {
@@ -77,10 +76,12 @@ func (service *ReportService) Analysis(c *gin.Context, input types.RequestAnalys
 }
 
 func Predict(service ReportService, url string, user usermodel.User, input types.RequestAnalysis) error {
-	response, err := HandleRequest(url)
+	response, err := HandleRequest(url, input.VideoURL)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("응답: ", response)
 
 	result, scores, nomalRatio, statusFrequencies, distances, landmarksInfo := ParseAnalysis(&response)
 	score := CalculateScores(result, scores)
@@ -110,26 +111,36 @@ func Predict(service ReportService, url string, user usermodel.User, input types
 	return nil
 }
 
-func HandleRequest(url string) (types.ResponseAnalysis, error) {
-	req, err := http.NewRequest("GET", url, nil)
+func HandleRequest(url string, videoURL string) (types.ResponseAnalysis, error) {
+	requestBody, err := json.Marshal(map[string]string{
+		"video_url": videoURL,
+	})
 	if err != nil {
 		return types.ResponseAnalysis{}, err
 	}
 
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return types.ResponseAnalysis{}, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// HTTP 클라이언트 요청 보내기
+	client := &http.Client{}
 	response, err := client.Do(req)
 	if err != nil {
 		return types.ResponseAnalysis{}, err
 	}
-
 	defer response.Body.Close()
 
+	// 응답 바디 읽기
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return types.ResponseAnalysis{}, err
 	}
 
 	var data types.ResponseAnalysis
-	err = json.Unmarshal([]byte(body), &data)
+	err = json.Unmarshal(body, &data)
 	if err != nil {
 		fmt.Println("응답 파싱 에러:", err)
 		return types.ResponseAnalysis{}, err
