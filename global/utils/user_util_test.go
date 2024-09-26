@@ -85,6 +85,24 @@ func TestUserUtil_FindCurrentUser(t *testing.T) {
 	assert.Equal(t, expectedUser, user)
 }
 
+func TestUserUtil_FindCurrentUser_NoUserID(t *testing.T) {
+	// Create a new instance of the mock repository
+	mockRepo := new(MockUserRepository)
+
+	// Create an instance of UserUtil with the mock repository
+	userUtil := utils.NewUserUtil(mockRepo)
+
+	// Create a sample gin.Context without the user ID
+	ctx := &gin.Context{}
+
+	// Call the method under test
+	user, err := userUtil.FindCurrentUser(ctx)
+
+	// Validate the result
+	assert.NotNil(t, err)
+	assert.Nil(t, user)
+}
+
 func TestUserUtil_FindCurrentUser_UserNotFound(t *testing.T) {
 	// Create a new instance of the mock repository
 	mockRepo := new(MockUserRepository)

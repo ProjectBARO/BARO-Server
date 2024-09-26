@@ -55,10 +55,6 @@ func (service *ReportService) Analysis(c *gin.Context, input types.RequestAnalys
 
 	u, _ := url.Parse(REQUEST_URL)
 
-	q := u.Query()
-	q.Add("video_url", input.VideoURL)
-	u.RawQuery = q.Encode()
-
 	message := "Video submitted successfully"
 
 	errCh := make(chan error, 1)
@@ -81,8 +77,6 @@ func Predict(service ReportService, url string, user usermodel.User, input types
 		return err
 	}
 
-	fmt.Println("응답: ", response)
-
 	result, scores, nomalRatio, statusFrequencies, distances, landmarksInfo := ParseAnalysis(&response)
 	score := CalculateScores(result, scores)
 
@@ -98,12 +92,14 @@ func Predict(service ReportService, url string, user usermodel.User, input types
 		Distances:         distances,
 		NeckAngles:        landmarksInfo,
 	}
-
 	savedReport, _ := service.ReportRepository.Save(&report)
 
 	title, body, _ := GenerateMessage(savedReport.CreatedAt.String())
+	return _SendPushNotification(user, title, body)
+}
 
-	err = fcm.SendPushNotification(user.FcmToken, title, body)
+func _SendPushNotification(user usermodel.User, title string, body string) error {
+	err := fcm.SendPushNotification(user.FcmToken, title, body)
 	if err != nil {
 		return err
 	}
@@ -125,7 +121,6 @@ func HandleRequest(url string, videoURL string) (types.ResponseAnalysis, error) 
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	// HTTP 클라이언트 요청 보내기
 	client := &http.Client{}
 	response, err := client.Do(req)
 	if err != nil {
@@ -133,7 +128,6 @@ func HandleRequest(url string, videoURL string) (types.ResponseAnalysis, error) 
 	}
 	defer response.Body.Close()
 
-	// 응답 바디 읽기
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return types.ResponseAnalysis{}, err
