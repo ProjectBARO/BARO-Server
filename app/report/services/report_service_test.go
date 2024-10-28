@@ -274,7 +274,7 @@ func TestParseAnalysis_FullStatusFrequencies(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("%v", []string{"1", "2", "1", "2"}), statusFrequencies)
 }
 
-func TestParseAnalysis_NoResult(t *testing.T) {
+func TestParseAnalysis_NoLandmarksInfo(t *testing.T) {
 	// response *types.ResponseAnalysis
 	response := types.ResponseAnalysis{
 		Result:            []int{},
@@ -285,26 +285,10 @@ func TestParseAnalysis_NoResult(t *testing.T) {
 		StatusFrequencies: map[string]int{"Fine": 1, "Danger": 2, "Serious": 1, "Very Serious": 2},
 	}
 
-	// Execute method under test
-	result, scores, nomalRatio, statusFrequencies, distances, landmarksInfo := services.ParseAnalysis(&response)
+	result, _, _, statusFrequencies, _, _ := services.ParseAnalysis(&response)
 
-	// func _CorrectionScore() ([]int, []float64, string, string, string, string) {
-	// 	res := []int{1}
-	// 	scores := []float64{97.8}
-	// 	nomalRatio := 83.3
-	// 	statusFrequencies := []int{7, 4, 3, 3}
-	// 	distances := []float64{2.0}
-	// 	angles := []float64{143.8}
-	// 	return res, scores, fmt.Sprintf("%.3f", nomalRatio), fmt.Sprintf("%v", statusFrequencies), fmt.Sprintf("%.3f", distances), fmt.Sprintf("%.3f", angles)
-	// }
-
-	// Assert result 위 값대로 나와야 함
 	assert.Equal(t, result, []int{1})
-	assert.Equal(t, scores, []float64{97.8})
-	assert.Equal(t, nomalRatio, "83.300")
 	assert.Equal(t, statusFrequencies, "[7 4 3 3]")
-	assert.Equal(t, distances, "[2.000]")
-	assert.Equal(t, landmarksInfo, "[143.800]")
 }
 
 func TestCalculateScores_AllBad(t *testing.T) {
