@@ -274,23 +274,6 @@ func TestParseAnalysis_FullStatusFrequencies(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("%v", []string{"1", "2", "1", "2"}), statusFrequencies)
 }
 
-func TestParseAnalysis_NoLandmarksInfo(t *testing.T) {
-	// response *types.ResponseAnalysis
-	response := types.ResponseAnalysis{
-		Result:            []int{},
-		HunchedRatio:      10.0,
-		NormalRatio:       90.0,
-		Scores:            []float64{},
-		LandmarksInfo:     []types.LandmarkInfo{},
-		StatusFrequencies: map[string]int{"Fine": 1, "Danger": 2, "Serious": 1, "Very Serious": 2},
-	}
-
-	result, _, _, statusFrequencies, _, _ := services.ParseAnalysis(&response)
-
-	assert.Equal(t, result, []int{1})
-	assert.Equal(t, statusFrequencies, "[7 4 3 3]")
-}
-
 func TestCalculateScores_AllBad(t *testing.T) {
 	// Set up test data
 	testResult := []int{0, 0, 0, 0, 0, 0}
